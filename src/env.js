@@ -24,6 +24,9 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
+    COGNITO_REGION: z.string(),
+    COGNITO_USER_POOL_ID: z.string(),
+    COGNITO_CLIENT_ID: z.string(),
   },
 
   runtimeEnv: {
@@ -39,6 +42,9 @@ export const env = createEnv({
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    COGNITO_REGION: process.env.COGNITO_REGION,
+    COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
+    COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

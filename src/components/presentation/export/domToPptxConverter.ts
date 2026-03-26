@@ -4,7 +4,7 @@
  */
 
 import { type PlateSlide } from "@/components/notebook/presentation/utils/parser";
-import PptxGenJS from "pptxgenjs/dist/pptxgen.bundle.js";
+import PptxGenJS from "pptxgenjs";
 import {
   type BackgroundRectExportElement,
   type DecorExportElement,
@@ -611,8 +611,7 @@ function addImageElement(
 ): void {
   try {
     const imageSizing = {
-      type:
-        (element.sizing === "fill" ? "crop" : element.sizing) || "contain",
+      type: (element.sizing === "fill" ? "crop" : element.sizing) || "contain",
       w: position.w,
       h: position.h,
     } as const;

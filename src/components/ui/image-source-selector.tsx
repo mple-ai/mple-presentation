@@ -1,6 +1,6 @@
 "use client";
 
-import { type ImageModelList } from "@/app/_actions/apps/image-studio/generate";
+import { TOGETHER_IMAGE_MODELS, type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -13,11 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Image, Wand2 } from "lucide-react";
 
-export const IMAGE_MODELS: { value: ImageModelList; label: string }[] = [
-  { value: "fal-ai/flux-2/flash", label: "Flux 2 Flash" },
-  { value: "fal-ai/flux/dev", label: "Flux Dev" },
-  { value: "fal-ai/flux-2-pro", label: "Flux 2 Pro" },
-];
+export const IMAGE_MODELS = TOGETHER_IMAGE_MODELS;
 
 interface ImageSourceSelectorProps {
   imageSource: "automatic" | "ai" | "stock";
@@ -48,7 +44,7 @@ export function ImageSourceSelector({
       <Select
         value={
           imageSource === "ai"
-            ? imageModel || "fal-ai/flux-2/flash"
+            ? imageModel || "black-forest-labs/FLUX.1-schnell"
             : imageSource === "stock"
               ? `stock-${stockImageProvider}`
               : "automatic"

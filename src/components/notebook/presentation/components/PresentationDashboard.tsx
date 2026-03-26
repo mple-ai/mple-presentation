@@ -1,7 +1,7 @@
 "use client";
 
-import { createBlankPresentation } from "@/app/_actions/notebook/presentation/presentationActions";
 import { fetchPresentations } from "@/app/_actions/notebook/presentation/fetchPresentations";
+import { createBlankPresentation } from "@/app/_actions/notebook/presentation/presentationActions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,12 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { usePresentationState } from "@/states/presentation-state";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { FilePlus2, Globe, Loader2, Presentation, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -116,7 +114,7 @@ export function PresentationDashboard() {
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6">
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+      <section className="grid gap-6 ">
         <Card className="border-border/60 bg-background/70 shadow-xs">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-2xl">
@@ -152,7 +150,7 @@ export function PresentationDashboard() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <div className="text-sm font-medium">Language</div>
                 <Select value={language} onValueChange={setLanguage}>
                   <SelectTrigger>
@@ -166,9 +164,9 @@ export function PresentationDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <div className="text-sm font-medium">Web search</div>
                 <div className="flex h-10 items-center justify-between rounded-md border px-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -180,7 +178,7 @@ export function PresentationDashboard() {
                     onCheckedChange={setWebSearchEnabled}
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -193,21 +191,21 @@ export function PresentationDashboard() {
                 ) : (
                   <Sparkles className="mr-2 h-4 w-4" />
                 )}
-                Generate outline
+                {`Generate outlines ${language}`}
               </Button>
-              <Button
+              {/* <Button
                 variant="outline"
                 onClick={() => void createPresentation(true)}
                 disabled={isCreating}
               >
                 <FilePlus2 className="mr-2 h-4 w-4" />
                 Blank presentation
-              </Button>
+              </Button> */}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-background/70 shadow-xs">
+        {/* <Card className="border-border/60 bg-background/70 shadow-xs">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
               <Presentation className="h-5 w-5 text-primary" />
@@ -245,7 +243,7 @@ export function PresentationDashboard() {
               ))
             )}
           </CardContent>
-        </Card>
+        </Card> */}
       </section>
     </div>
   );

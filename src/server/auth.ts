@@ -3,7 +3,19 @@ import { db } from "@/server/db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import NextAuth, { type DefaultSession, type Session } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
+import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+
+import { createRemoteJWKSet, jwtVerify } from "jose";
+
+const REGION = env.COGNITO_REGION;
+const USER_POOL_ID = env.COGNITO_USER_POOL_ID;
+const CLIENT_ID = env.COGNITO_CLIENT_ID;
+
+const issuer = `https://cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`;
+
+const JWKS = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
+
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
@@ -23,9 +35,69 @@ declare module "next-auth" {
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   trustHost: true,
+
   session: {
     strategy: "jwt",
   },
+
+  // ================================
+  // 🔑 Providers
+  // ================================
+  providers: [
+    // ✅ Existing Google login (unchanged)
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+    }),
+
+    // ✅ NEW: Cognito token login (for iframe SSO)
+    CredentialsProvider({
+      name: "CognitoToken",
+      credentials: {
+        token: {},
+      },
+      async authorize(credentials) {
+        try {
+          const token = credentials?.token as string | undefined;
+          if (!token) return null;
+
+          // 🔐 Verify Cognito JWT
+          const { payload } = await jwtVerify(token, JWKS, {
+            issuer,
+            audience: CLIENT_ID,
+          });
+
+          const email = payload.email as string;
+          const name = payload.name as string;
+
+          if (!email) return null;
+
+          const user = await db.user.upsert({
+            where: { email },
+            update: {},
+            create: {
+              email,
+              name,
+              role: "USER",
+              hasAccess: true,
+            },
+          });
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            hasAccess: user.hasAccess,
+          };
+        } catch (err) {
+          console.error("Cognito token auth failed:", err);
+          return null;
+        }
+      },
+    }),
+  ],
+
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (user) {
@@ -39,12 +111,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.isAdmin = user.role === "ADMIN";
       }
 
-      // Handle updates
       if (trigger === "update" && (session as Session)?.user) {
-        const user = await db.user.findUnique({
+        const dbUser = await db.user.findUnique({
           where: { id: token.id as string },
         });
-        console.log("Session", session, user);
+
         if (session) {
           token.name = (session as Session).user.name;
           token.image = (session as Session).user.image;
@@ -53,15 +124,17 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           token.role = (session as Session).user.role;
           token.isAdmin = (session as Session).user.role === "ADMIN";
         }
-        if (user) {
-          token.hasAccess = user?.hasAccess ?? false;
-          token.role = user.role;
-          token.isAdmin = user.role === "ADMIN";
+
+        if (dbUser) {
+          token.hasAccess = dbUser.hasAccess ?? false;
+          token.role = dbUser.role;
+          token.isAdmin = dbUser.role === "ADMIN";
         }
       }
 
       return token;
     },
+
     async session({ session, token }) {
       session.user.id = token.id as string;
       session.user.hasAccess = token.hasAccess as boolean;
@@ -70,6 +143,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       session.user.isAdmin = token.role === "ADMIN";
       return session;
     },
+
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         const dbUser = await db.user.findUnique({
@@ -91,10 +165,4 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   },
 
   adapter: PrismaAdapter(db) as Adapter,
-  providers: [
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    }),
-  ],
 });

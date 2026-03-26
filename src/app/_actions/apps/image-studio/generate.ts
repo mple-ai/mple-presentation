@@ -10,15 +10,7 @@ import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { fal } from "@fal-ai/client";
 import { UTFile } from "uploadthing/server";
-
-export type FalImageModelList =
-  | "fal-ai/flux-2/flash"
-  | "fal-ai/flux-2/turbo"
-  | "fal-ai/flux/dev"
-  | "fal-ai/flux-2-pro"
-  | "fal-ai/nano-banana-pro";
-
-export type ImageModelList = TogetherImageModelList | FalImageModelList;
+import { type FalImageModelList, type ImageModelList } from "./constants";
 
 if (env.FAL_API_KEY) {
   fal.config({
@@ -91,7 +83,7 @@ async function generateFalImage(
 
 export async function generateImageAction(
   prompt: string,
-  model: ImageModelList = "fal-ai/flux-2/flash",
+  model: ImageModelList = "black-forest-labs/FLUX.1-schnell",
 ) {
   const session = await auth();
 

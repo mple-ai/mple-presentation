@@ -1,5 +1,5 @@
 import { type Image as GeneratedImage } from "@/app/_actions/apps/image-studio/fetch";
-import { type ImageModelList } from "@/app/_actions/apps/image-studio/generate";
+import { type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
 import { type PlateSlide } from "@/components/notebook/presentation/utils/parser";
 import { type ThemeProperties, type Themes } from "@/lib/presentation/themes";
 import { create } from "zustand";
@@ -113,9 +113,7 @@ interface PresentationState {
   isRightPanelCollapsed: boolean;
   setIsRightPanelCollapsed: (update: boolean) => void;
   setSlides: (
-    slides:
-      | PlateSlide[]
-      | ((slides: PlateSlide[]) => PlateSlide[]),
+    slides: PlateSlide[] | ((slides: PlateSlide[]) => PlateSlide[]),
     type?: HistoryType,
   ) => void;
   updateSlide: (
@@ -346,7 +344,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   setShouldShowExitHeader: (update) => set({ shouldShowExitHeader: update }),
   thumbnailUrl: undefined,
   setThumbnailUrl: (url) => set({ thumbnailUrl: url }),
-  numSlides: 5,
+  numSlides: 10,
   language: "en-US",
   pageStyle: "default",
   showTemplates: false,
@@ -356,7 +354,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   webSearchEnabled: false,
   theme: "mystique",
   customThemeData: null,
-  imageModel: "fal-ai/flux-2/flash",
+  imageModel: "black-forest-labs/FLUX.1-schnell",
   imageSource: "automatic",
   stockImageProvider: "unsplash",
   presentationStyle: "professional",
@@ -445,10 +443,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
 
   setSlides: (slides, type) => {
     set((state) => ({
-      slides:
-        typeof slides === "function"
-          ? slides(state.slides)
-          : slides,
+      slides: typeof slides === "function" ? slides(state.slides) : slides,
     }));
 
     pushHistorySnapshot(type, undefined, "full");

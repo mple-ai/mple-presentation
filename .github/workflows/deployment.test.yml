@@ -1,0 +1,79 @@
+name: PPT Generation PROD Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  gcp-prod-deployment:
+    name: Build and push image, deploy
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      SERVICE_NAME: mple-ppt
+      REGION: asia-south1
+      ARTIFACT_REPO_NAME: ${{ secrets.ARTIFACT_REPO_NAME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create .env file
+        working-directory: ${{ github.workspace }}
+        run: touch .env
+
+      - name: Make envfile
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL_TEST }}" >> .env
+          echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" >> .env
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
+          echo "TOGETHER_AI_API_KEY=${{ secrets.TOGETHER_AI_API_KEY }}" >> .env
+          echo "FAL_API_KEY=${{ secrets.FAL_API_KEY }}" >> .env
+          echo "UPLOADTHING_TOKEN=${{ secrets.UPLOADTHING_TOKEN }}" >> .env
+          echo "UNSPLASH_ACCESS_KEY=${{ secrets.UNSPLASH_ACCESS_KEY }}" >> .env
+          echo "TAVILY_API_KEY=${{ secrets.TAVILY_API_KEY }}" >> .env
+          echo "COGNITO_REGION=${{ secrets.COGNITO_REGION }}" >> .env
+          echo "COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID_TEST }}" >> .env
+          echo "COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID_TEST }}" >> .env
+          echo "NODE_ENV=production" >> .env
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: "${{ secrets.GCR_DEVOPS_SERVICE_ACCOUNT_KEY }}"
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.PROJECT_ID }}
+          install_components: beta
+
+      - name: Update gcloud to latest
+        run: gcloud components update -q
+
+      - name: Configure Docker authentication
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev -q
+
+      - name: Build Docker image
+        run: |
+          docker build -t asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA .
+
+      - name: Authenticate Docker with gcloud
+        run: |
+          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://asia-south1-docker.pkg.dev
+
+      - name: Push Docker image to Artifact Registry
+        run: |
+          docker push asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA
+
+      - name: Deploy to Cloud Run (Gen2)
+        run: |
+          gcloud run deploy $SERVICE_NAME \
+            --image=asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA \
+            --region=$REGION \
+            --platform=managed \
+            --allow-unauthenticated \
+            --async

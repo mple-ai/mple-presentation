@@ -1,10 +1,8 @@
 "use client";
 
 import { type Image as GeneratedImage } from "@/app/_actions/apps/image-studio/fetch";
-import {
-  generateImageAction,
-  type ImageModelList,
-} from "@/app/_actions/apps/image-studio/generate";
+import { generateImageAction } from "@/app/_actions/apps/image-studio/generate";
+import { type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -342,14 +340,16 @@ export function SharedGenerateControls({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="fal-ai/flux-2/flash">
-                  Flux 2 Flash
+                <SelectItem value="black-forest-labs/FLUX1.1-pro">
+                  Flux 1.1 Pro
                 </SelectItem>
-                <SelectItem value="fal-ai/flux-2/turbo">
-                  Flux 2 Turbo
+                <SelectItem value="black-forest-labs/FLUX.1-pro">
+                  Flux 1 Pro
                 </SelectItem>
-                <SelectItem value="fal-ai/flux/dev">Flux Dev</SelectItem>
-                <SelectItem value="fal-ai/flux-2-pro">Flux 2 Pro</SelectItem>
+                <SelectItem value="black-forest-labs/FLUX.1-dev">Flux Dev</SelectItem>
+                <SelectItem value="black-forest-labs/FLUX.1-schnell">
+                  Flux 1 Schnell
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -6,15 +6,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 // Import our new components
-import { updatePresentationTitle } from "@/app/_actions/notebook/presentation/presentationActions";
 import AllweoneText from "@/components/globals/allweone-logo";
-import { PresentButton } from "@/components/presentation/buttons/PresentButton";
-import { ShareButton } from "@/components/presentation/buttons/ShareButton";
-import { PresentationMenu } from "@/components/presentation/controls/PresentationMenu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Bot, Palette } from "lucide-react";
 import * as motion from "motion/react-client";
+import { ExportButton } from "../buttons/ExportButton";
 
 interface PresentationHeaderProps {
   title?: string;
@@ -88,7 +83,7 @@ export default function PresentationHeader({ title }: PresentationHeaderProps) {
       translate="no"
     >
       {/* Left section with breadcrumb navigation */}
-      <div className="flex min-w-0 flex-1 items-center gap-2">
+      {/* <div className="flex min-w-0 flex-1 items-center gap-2">
         <Link
           href="/presentations"
           className="text-muted-foreground hover:text-foreground"
@@ -126,12 +121,12 @@ export default function PresentationHeader({ title }: PresentationHeaderProps) {
             appearance: "none",
           }}
         />
-      </div>
+      </div> */}
 
       {/* Right section with actions */}
-      <div className="scrollbar-hide flex max-w-[56vw] shrink-0 items-center gap-2 overflow-x-auto md:max-w-none md:overflow-visible">
+      <div className="ml-auto scrollbar-hide flex max-w-[56vw] shrink-0 items-center gap-2 overflow-x-auto md:max-w-none md:overflow-visible">
         {/* Theme button - Only in presentation page, not outline or present mode */}
-        {isPresentationPage && !isPresenting && !isReadOnly && (
+        {/* {isPresentationPage && !isPresenting && !isReadOnly && (
           <Button
             variant="ghost"
             className="h-9 gap-1.5"
@@ -141,29 +136,33 @@ export default function PresentationHeader({ title }: PresentationHeaderProps) {
             <Palette className="size-4" />
             <span className="hidden sm:inline">Theme</span>
           </Button>
-        )}
+        )} */}
 
         {/* Export button - Only in presentation page, not outline or present mode */}
+        {isPresentationPage && !isPresenting && <ExportButton />}
+
         {/* Share button - Only in presentation page, not outline */}
-        {isPresentationPage && !isPresenting && !isReadOnly && <ShareButton />}
+        {/* {isPresentationPage && !isPresenting && !isReadOnly && <ShareButton />} */}
 
         {/* Agent button - Only in presentation page, not outline or present mode */}
-        {isPresentationPage && !isPresenting && !isReadOnly && (
+        {/* {isPresentationPage && !isPresenting && !isReadOnly && (
           <Button
             variant={activeRightPanel === "agent" ? "default" : "outline"}
             size="sm"
             onClick={() => {
-              setActiveRightPanel(activeRightPanel === "agent" ? null : "agent");
+              setActiveRightPanel(
+                activeRightPanel === "agent" ? null : "agent",
+              );
             }}
             className="gap-2"
           >
             <Bot className="h-4 w-4" />
             <span className="hidden sm:inline">Agent</span>
           </Button>
-        )}
+        )} */}
 
         {/* Present button - Only in presentation page, not outline */}
-        {isPresentationPage && <PresentButton />}
+        {/* {isPresentationPage && <PresentButton />} */}
 
         {/* User profile dropdown - Keep this on all pages */}
         {/* {!isPresenting && <SideBarDropdown />} */}

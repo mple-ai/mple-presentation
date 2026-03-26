@@ -1,4 +1,4 @@
-import { type ImageModelList } from "@/app/_actions/apps/image-studio/generate";
+import { type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
 import { useState } from "react";
 
 const GoogleLogo = () => (
@@ -42,17 +42,17 @@ const FluxLogo = () => (
 
 const MODELS = [
   {
-    id: "fal-ai/nano-banana-pro",
-    name: "Nano Banana Pro",
-    provider: "Google",
-    logo: <GoogleLogo />,
-    premium: true,
-  },
-  {
-    id: "fal-ai/flux-2/flash",
-    name: "Flux 2.0",
+    id: "black-forest-labs/FLUX.1-schnell",
+    name: "Flux 1 Schnell",
     provider: "Black Forest Labs",
     logo: <FluxLogo />,
+  },
+  {
+    id: "black-forest-labs/FLUX.1-dev",
+    name: "Flux 1 Dev",
+    provider: "Black Forest Labs",
+    logo: <FluxLogo />,
+    premium: true,
   },
 ];
 

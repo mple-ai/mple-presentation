@@ -1,7 +1,5 @@
-import {
-  generateImageAction,
-  type ImageModelList,
-} from "@/app/_actions/apps/image-studio/generate";
+import { generateImageAction } from "@/app/_actions/apps/image-studio/generate";
+import { type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,16 +27,16 @@ import { toast } from "sonner";
 
 const MODEL_OPTIONS = [
   {
-    label: "Flux 2 Flash",
-    value: "fal-ai/flux-2/flash",
+    label: "Flux 1 Schnell",
+    value: "black-forest-labs/FLUX.1-schnell",
   },
   {
-    label: "Flux Dev",
-    value: "fal-ai/flux/dev",
+    label: "Flux 1 Dev",
+    value: "black-forest-labs/FLUX.1-dev",
   },
   {
-    label: "Flux 2 Pro",
-    value: "fal-ai/flux-2-pro",
+    label: "Flux 1 Pro",
+    value: "black-forest-labs/FLUX.1-pro",
   },
 ];
 
@@ -54,7 +52,7 @@ export function GenerateImageDialogContent({
   const editor = useEditorRef();
   const [prompt, setPrompt] = useState("");
   const [selectedModel, setSelectedModel] = useState<ImageModelList>(
-    "fal-ai/flux-2/flash",
+    "black-forest-labs/FLUX.1-schnell",
   );
 
   const generateImage = async () => {

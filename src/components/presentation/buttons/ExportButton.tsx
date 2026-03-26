@@ -16,7 +16,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { usePresentationState } from "@/states/presentation-state";
 import { Download, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { downloadBlob, exportPresentationToPptx, scanAllSlides } from "../export";
+import {
+  downloadBlob,
+  exportPresentationToPptx,
+  scanAllSlides,
+} from "../export";
 import { SaveStatus } from "./SaveStatus";
 
 export function ExportButton() {
@@ -48,7 +52,7 @@ export function ExportButton() {
         throw new Error("No slides to export");
       }
 
-      const { update, dismiss } = toast({
+      const { update } = toast({
         title: "Exporting Presentation",
         description: (
           <div className="flex items-center gap-2">
@@ -82,24 +86,30 @@ export function ExportButton() {
         currentPresentationTitle ?? "presentation",
       );
 
-      update({
-        title: "Export Complete",
-        description: (
-          <Button
-            size="sm"
-            variant="outline"
-            className="mt-2"
-            onClick={() => {
-              handleDownload();
-              dismiss();
-            }}
-          >
-            <Download className="mr-1 h-4 w-4" />
-            Download PowerPoint
-          </Button>
-        ),
-        duration: 15000,
-      });
+      handleDownload();
+
+      const { blob } = exportResultRef.current;
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64data = reader.result;
+
+        // Send the Data URL back to the parent app
+        globalThis.parent.postMessage(
+          { type: "PRESENTATION_GENERATED", url: base64data },
+          "*",
+        );
+
+        update({
+          title: "Export Complete",
+          description: "Presentation sent to parent app.",
+          duration: 5000,
+        });
+      };
+      reader.onerror = () => {
+        throw new Error("Failed to convert presentation data.");
+      };
+      reader.readAsDataURL(blob);
 
       setIsExportDialogOpen(false);
     } catch (error) {

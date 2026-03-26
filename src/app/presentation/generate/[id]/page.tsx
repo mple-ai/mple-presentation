@@ -1,6 +1,6 @@
 "use client";
 
-import { type ImageModelList } from "@/app/_actions/apps/image-studio/generate";
+import { type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
 import { getPresentation } from "@/app/_actions/notebook/presentation/presentationActions";
 import { getCustomThemeById } from "@/app/_actions/presentation/theme-actions";
 import { Header } from "@/components/notebook/presentation/components/outline/Header";
