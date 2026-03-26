@@ -1,4 +1,4 @@
-name: PPT Generation PROD Deployment
+name: PPT Generation TEST Deployment
 
 on:
   workflow_dispatch:
