@@ -36,24 +36,24 @@ jobs:
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev -q
 
       - name: Build Docker image
-  run: |
-    docker build \
-      --build-arg DATABASE_URL="${{ secrets.DATABASE_URL_TEST }}" \
-      --build-arg NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
-      --build-arg NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
-      --build-arg GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
-      --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
-      --build-arg OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-      --build-arg TOGETHER_AI_API_KEY="${{ secrets.TOGETHER_AI_API_KEY }}" \
-      --build-arg FAL_API_KEY="${{ secrets.FAL_API_KEY }}" \
-      --build-arg UPLOADTHING_TOKEN="${{ secrets.UPLOADTHING_TOKEN }}" \
-      --build-arg UNSPLASH_ACCESS_KEY="${{ secrets.UNSPLASH_ACCESS_KEY }}" \
-      --build-arg TAVILY_API_KEY="${{ secrets.TAVILY_API_KEY }}" \
-      --build-arg COGNITO_REGION="${{ secrets.COGNITO_REGION }}" \
-      --build-arg COGNITO_USER_POOL_ID="${{ secrets.COGNITO_USER_POOL_ID_TEST }}" \
-      --build-arg COGNITO_CLIENT_ID="${{ secrets.COGNITO_CLIENT_ID_TEST }}" \
-      --build-arg NODE_ENV="production" \
-      -t asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA .
+        run: |
+          docker build \
+            --build-arg DATABASE_URL="${{ secrets.DATABASE_URL_TEST }}" \
+            --build-arg NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
+            --build-arg NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
+            --build-arg GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+            --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+            --build-arg OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+            --build-arg TOGETHER_AI_API_KEY="${{ secrets.TOGETHER_AI_API_KEY }}" \
+            --build-arg FAL_API_KEY="${{ secrets.FAL_API_KEY }}" \
+            --build-arg UPLOADTHING_TOKEN="${{ secrets.UPLOADTHING_TOKEN }}" \
+            --build-arg UNSPLASH_ACCESS_KEY="${{ secrets.UNSPLASH_ACCESS_KEY }}" \
+            --build-arg TAVILY_API_KEY="${{ secrets.TAVILY_API_KEY }}" \
+            --build-arg COGNITO_REGION="${{ secrets.COGNITO_REGION }}" \
+            --build-arg COGNITO_USER_POOL_ID="${{ secrets.COGNITO_USER_POOL_ID_TEST }}" \
+            --build-arg COGNITO_CLIENT_ID="${{ secrets.COGNITO_CLIENT_ID_TEST }}" \
+            --build-arg NODE_ENV="production" \
+            -t asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA .
 
       - name: Authenticate Docker with gcloud
         run: |
