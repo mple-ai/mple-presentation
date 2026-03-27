@@ -183,6 +183,7 @@ export function PresentationDashboard() {
 
             <div className="flex flex-wrap gap-3">
               <Button
+                className="cursor-pointer bg-[#4e0da3] hover:bg-[#4e0da3]"
                 onClick={() => void createPresentation(false)}
                 disabled={isCreating || !presentationInput.trim()}
               >

@@ -314,7 +314,7 @@ export default function PresentationGenerateWithIdPage() {
           <div className="w-full sm:w-fit sm:flex-none">
             <Button
               size="lg"
-              className="w-full gap-2 px-8 sm:h-10 sm:w-auto sm:min-w-0 sm:px-5 sm:text-sm"
+              className="cursor-pointer w-full gap-2 px-8 sm:h-10 sm:w-auto sm:min-w-0 sm:px-5 sm:text-sm bg-[#4e0da3] hover:bg-[#4e0da3]"
               onClick={handleGenerate}
               disabled={isGeneratePresentationDisabled}
             >
