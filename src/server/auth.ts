@@ -36,6 +36,37 @@ declare module "next-auth" {
 export const { auth, handlers, signIn, signOut } = NextAuth({
   trustHost: true,
 
+  // Allow cookies to be sent when embedded in a cross-origin iframe
+  cookies: {
+    csrfToken: {
+      name: "__Host-next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none" as const,
+        path: "/",
+        secure: true,
+      },
+    },
+    sessionToken: {
+      name: "__Secure-next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none" as const,
+        path: "/",
+        secure: true,
+      },
+    },
+    callbackUrl: {
+      name: "__Secure-next-auth.callback-url",
+      options: {
+        httpOnly: true,
+        sameSite: "none" as const,
+        path: "/",
+        secure: true,
+      },
+    },
+  },
+
   session: {
     strategy: "jwt",
   },
