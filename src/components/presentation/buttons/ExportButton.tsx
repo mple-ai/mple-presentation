@@ -86,7 +86,7 @@ export function ExportButton() {
         currentPresentationTitle ?? "presentation",
       );
 
-      handleDownload();
+      // handleDownload();
 
       const { blob } = exportResultRef.current;
 
@@ -131,9 +131,8 @@ export function ExportButton() {
     <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="ghost"
-          size="sm"
-          className="relative h-9 w-9 px-0 text-muted-foreground hover:text-foreground sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3"
+          size="lg"
+          className="relative h-9 w-9 px-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3"
           aria-label="Export presentation"
         >
           <SaveStatus className="absolute top-1 right-1 sm:static" />

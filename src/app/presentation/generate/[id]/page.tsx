@@ -10,7 +10,6 @@ import { PresentationCustomizer } from "@/components/notebook/presentation/compo
 import { ThemeBackground } from "@/components/notebook/presentation/components/theme/ThemeBackground";
 import { ThemeSettings } from "@/components/notebook/presentation/components/theme/ThemeSettings";
 import { usePresentationTheme } from "@/components/presentation/providers/PresentationThemeProvider";
-import { HelpMenu } from "@/components/sidebar/help-menu";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -215,7 +214,6 @@ export default function PresentationGenerateWithIdPage() {
         );
         setPageBackground(next);
       }
-
     }
   }, [
     presentationData,
@@ -327,9 +325,9 @@ export default function PresentationGenerateWithIdPage() {
         </div>
       </div>
 
-      <div className="fixed right-4 bottom-24 z-99999 sm:right-6 sm:bottom-2">
+      {/* <div className="fixed right-4 bottom-24 z-99999 sm:right-6 sm:bottom-2">
         <HelpMenu hideKeyboardShortcutsOnMobile />
-      </div>
+      </div> */}
     </ThemeBackground>
   );
 }

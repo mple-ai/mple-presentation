@@ -22,6 +22,7 @@ import { AllCommunityModule, ModuleRegistry } from "ag-charts-community";
 import { AllEnterpriseModule, LicenseManager } from "ag-charts-enterprise";
 import { RightEditPanel } from "../edit-panel/RightEditPanel";
 import { RightPanelRenderer } from "../edit-panel/RightPanelRenderer";
+import { ExportButton } from "../buttons/ExportButton";
 
 ModuleRegistry.registerModules([AllCommunityModule, AllEnterpriseModule]);
 LicenseManager.setLicenseKey(
@@ -99,7 +100,7 @@ export default function PresentationPage({
                 isPresenting && "fixed inset-0 pb-0",
               )}
             >
-              <div className="mx-auto flex min-w-0 flex-1 flex-col space-y-8 px-3 pt-8 sm:px-0 sm:pt-16 lg:max-w-[95%] xl:max-w-[90%]">
+              <div className="mx-auto flex min-w-0 flex-1 flex-col space-y-8 px-3 pt-8 pb-32 sm:px-0 sm:pt-16 lg:max-w-[95%] xl:max-w-[90%]">
                 <div className="space-y-8" ref={containerRef}>
                   <SlidesContainer
                     isGeneratingPresentation={isGeneratingPresentation}
@@ -129,6 +130,16 @@ export default function PresentationPage({
       </TouchAwareDndProvider>
 
       {isPresentingLoading && <PresentingLoadingOverlay />}
+
+      {!isPresenting && (
+        <div className="fixed right-0 bottom-0 left-0 z-50 border-t bg-background/80 p-4 backdrop-blur-xs">
+          <div className="mx-auto flex w-full max-w-4xl flex-col justify-center gap-3 sm:w-fit sm:max-w-none sm:flex-row sm:gap-4">
+            <div className="w-full sm:w-fit sm:flex-none">
+              <ExportButton />
+            </div>
+          </div>
+        </div>
+      )}
     </ThemeBackground>
   );
 }

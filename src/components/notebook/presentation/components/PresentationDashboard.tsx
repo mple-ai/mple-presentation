@@ -61,7 +61,7 @@ export function PresentationDashboard() {
 
   const items = data?.items ?? [];
   const slidesOptions = useMemo(
-    () => Array.from({ length: 12 }, (_, index) => `${index + 1}`),
+    () => Array.from({ length: 30 }, (_, index) => `${index + 1}`),
     [],
   );
 
@@ -191,7 +191,7 @@ export function PresentationDashboard() {
                 ) : (
                   <Sparkles className="mr-2 h-4 w-4" />
                 )}
-                {`Generate outlines (${language})`}
+                Generate outline
               </Button>
               {/* <Button
                 variant="outline"

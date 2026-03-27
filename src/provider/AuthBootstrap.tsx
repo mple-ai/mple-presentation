@@ -86,7 +86,7 @@ export function AuthBootstrap({
   if (!authDone || status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
-        Authenticating...
+        Loading...
       </div>
     );
   }
