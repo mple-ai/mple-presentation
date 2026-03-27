@@ -13,6 +13,7 @@ jobs:
       SERVICE_NAME: mple-ppt
       REGION: asia-south1
       ARTIFACT_REPO_NAME: ${{ secrets.ARTIFACT_REPO_NAME }}
+      IMAGE_BASE: asia-south1-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.ARTIFACT_REPO_NAME }}/prod
 
     steps:
       - name: Checkout
@@ -50,24 +51,38 @@ jobs:
             --build-arg UNSPLASH_ACCESS_KEY="${{ secrets.UNSPLASH_ACCESS_KEY }}" \
             --build-arg TAVILY_API_KEY="${{ secrets.TAVILY_API_KEY }}" \
             --build-arg COGNITO_REGION="${{ secrets.COGNITO_REGION }}" \
-            --build-arg COGNITO_USER_POOL_ID="${{ secrets.COGNITO_USER_POOL_ID_TEST }}" \
-            --build-arg COGNITO_CLIENT_ID="${{ secrets.COGNITO_CLIENT_ID_TEST }}" \
-            --build-arg NODE_ENV="production" \
-            -t asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA .
+            --build-arg COGNITO_USER_POOL_ID="${{ secrets.COGNITO_USER_POOL_ID_PROD }}" \
+            --build-arg COGNITO_CLIENT_ID="${{ secrets.COGNITO_CLIENT_ID_PROD }}" \
+            -t ${{ env.IMAGE_BASE }}:${{ github.sha }} \
+            -t ${{ env.IMAGE_BASE }}:latest \
+            .
 
       - name: Authenticate Docker with gcloud
         run: |
-          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://asia-south1-docker.pkg.dev
+          gcloud auth print-access-token | docker login -u oauth2accesstoken \
+            --password-stdin https://asia-south1-docker.pkg.dev
 
       - name: Push Docker image to Artifact Registry
         run: |
-          docker push asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA
+          docker push ${{ env.IMAGE_BASE }}:${{ github.sha }}
+          docker push ${{ env.IMAGE_BASE }}:latest
 
-      - name: Deploy to Cloud Run (Gen2)
+      - name: Deploy to Cloud Run
         run: |
           gcloud run deploy $SERVICE_NAME \
-            --image=asia-south1-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPO_NAME/prod:$GITHUB_SHA \
+            --image=${{ env.IMAGE_BASE }}:${{ github.sha }} \
             --region=$REGION \
             --platform=managed \
             --allow-unauthenticated \
-            --async
+            --execution-environment=gen2
+
+      - name: Verify deployment
+        run: |
+          STATUS=$(gcloud run services describe $SERVICE_NAME \
+            --region=$REGION \
+            --format='value(status.conditions[0].status)')
+          echo "Deployment status: $STATUS"
+          if [ "$STATUS" != "True" ]; then
+            echo "Deployment failed or is not ready"
+            exit 1
+          fi
