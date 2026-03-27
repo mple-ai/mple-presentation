@@ -8,3 +8,6 @@
 .git
 Dockerfile
 docker-compose.yml
+google.prod.json
+google.test.json
+google.dev.json
