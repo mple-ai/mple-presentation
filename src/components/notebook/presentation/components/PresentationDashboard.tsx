@@ -191,7 +191,7 @@ export function PresentationDashboard() {
                 ) : (
                   <Sparkles className="mr-2 h-4 w-4" />
                 )}
-                {`Generate outlines ${language}`}
+                {`Generate outlines (${language})`}
               </Button>
               {/* <Button
                 variant="outline"

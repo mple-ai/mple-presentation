@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PROJECT_ID: ${{ secrets.PROJECT_ID_TEST }}
-      SERVICE_NAME: mple-ppt-test
+      PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      SERVICE_NAME: mple-ppt
       REGION: asia-south1
-      ARTIFACT_REPO_NAME: ${{ secrets.ARTIFACT_REPO_NAME_TEST }}
+      ARTIFACT_REPO_NAME: ${{ secrets.ARTIFACT_REPO_NAME }}
 
     steps:
       - name: Checkout
@@ -21,12 +21,12 @@ jobs:
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: "${{ secrets.GCR_DEVOPS_SERVICE_ACCOUNT_KEY_TEST }}"
+          credentials_json: "${{ secrets.GCR_DEVOPS_SERVICE_ACCOUNT_KEY }}"
 
       - name: Setup Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.PROJECT_ID_TEST }}
+          project_id: ${{ secrets.PROJECT_ID }}
           install_components: beta
 
       - name: Update gcloud to latest
@@ -38,7 +38,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            --build-arg DATABASE_URL="${{ secrets.DATABASE_URL_TEST }}" \
+            --build-arg DATABASE_URL="${{ secrets.DATABASE_URL_PROD }}" \
             --build-arg NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
             --build-arg NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
             --build-arg GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
@@ -70,5 +70,4 @@ jobs:
             --region=$REGION \
             --platform=managed \
             --allow-unauthenticated \
-            --execution-environment=gen2 \
             --async
