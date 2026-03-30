@@ -5,7 +5,7 @@ export async function proxy(request: NextRequest) {
   const session = await auth();
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isDeniedPage = request.nextUrl.pathname.startsWith("/auth/denied");
-  const hasToken = request.nextUrl.searchParams.has("token");
+  const token = request.nextUrl.searchParams.get("token");
 
   // Always redirect from root to /presentation
   if (request.nextUrl.pathname === "/") {
@@ -17,12 +17,45 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/presentation", request.url));
   }
 
-  // Allow through if a cognito token is present — AuthBootstrap will handle auth
-  if (hasToken) {
-    return NextResponse.next();
+  // If a cognito token is present -> handle auth here in middleware
+  if (token) {
+    const authUrl = new URL("/api/auth/cognito", request.url);
+
+    try {
+      const authRes = await fetch(authUrl.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Forward existing cookies so NextAuth can find any existing session
+          cookie: request.headers.get("cookie") ?? "",
+        },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!authRes.ok) {
+        return NextResponse.redirect(new URL("/auth/denied", request.url));
+      }
+
+      // Redirect to clean URL (strip token + keep language param)
+      const cleanUrl = request.nextUrl.clone();
+      cleanUrl.searchParams.delete("token");
+
+      const res = NextResponse.redirect(cleanUrl);
+
+      // Forward the session cookie set by NextAuth back to the browser
+      const setCookie = authRes.headers.get("set-cookie");
+      if (setCookie) {
+        res.headers.set("set-cookie", setCookie);
+      }
+
+      return res;
+    } catch (err) {
+      console.error("Middleware cognito auth failed:", err);
+      return NextResponse.redirect(new URL("/auth/denied", request.url));
+    }
   }
 
-  // If user is not authenticated, show denied page (no Google login on this app)
+  // If user is not authenticated, show denied page
   if (
     !session &&
     !isAuthPage &&
