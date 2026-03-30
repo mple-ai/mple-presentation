@@ -1,5 +1,5 @@
-import { type Image as GeneratedImage } from "@/app/_actions/apps/image-studio/fetch";
 import { type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
+import { type Image as GeneratedImage } from "@/app/_actions/apps/image-studio/fetch";
 import { type PlateSlide } from "@/components/notebook/presentation/utils/parser";
 import { type ThemeProperties, type Themes } from "@/lib/presentation/themes";
 import { create } from "zustand";
@@ -355,7 +355,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   theme: "mystique",
   customThemeData: null,
   imageModel: "black-forest-labs/FLUX.1-schnell",
-  imageSource: "automatic",
+  imageSource: "ai",
   stockImageProvider: "unsplash",
   presentationStyle: "professional",
   textContent: "concise",
