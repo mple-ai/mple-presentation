@@ -2,6 +2,7 @@
 
 import { fetchPresentations } from "@/app/_actions/notebook/presentation/fetchPresentations";
 import { createBlankPresentation } from "@/app/_actions/notebook/presentation/presentationActions";
+import { ModelPicker } from "@/components/notebook/presentation/components/ModelPicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -44,6 +45,8 @@ export function PresentationDashboard() {
     setPresentationInput,
     language,
     setLanguage,
+    modelId,
+    modelProvider,
     numSlides,
     setNumSlides,
     webSearchEnabled,
@@ -54,7 +57,7 @@ export function PresentationDashboard() {
     resetPresentationState,
   } = usePresentationState();
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["presentations"],
     queryFn: () => fetchPresentations(0),
   });
@@ -65,7 +68,7 @@ export function PresentationDashboard() {
     [],
   );
 
-  const createPresentation = async (blank = false) => {
+  const createPresentation = async () => {
     setIsCreating(true);
     const prompt = presentationInput.trim();
     const selectedLanguage = language;
@@ -74,18 +77,33 @@ export function PresentationDashboard() {
     resetPresentationState();
 
     try {
-      if (!blank) {
-        setPendingCreateRequest({
-          prompt,
-          language: selectedLanguage,
-          numSlides: selectedNumSlides,
-          webSearchEnabled: selectedWebSearchEnabled,
-        });
-        router.push("/presentation/create");
-        return;
-      }
+      setPendingCreateRequest({
+        prompt,
+        language: selectedLanguage,
+        modelId,
+        modelProvider,
+        numSlides: selectedNumSlides,
+        webSearchEnabled: selectedWebSearchEnabled,
+      });
+      router.push("/presentation/create");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to create presentation");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
-      const title = prompt || "Blank presentation";
+  const createBlank = async () => {
+    if (isCreating) {
+      return;
+    }
+
+    setIsCreating(true);
+    const title = presentationInput.trim() || "Blank presentation";
+    const selectedLanguage = language;
+
+    try {
       const theme = resolvedTheme === "dark" ? "ebony" : "mystique";
       const result = await createBlankPresentation(
         title,
@@ -100,15 +118,12 @@ export function PresentationDashboard() {
 
       setTheme(theme);
       setCurrentPresentation(result.presentation.id, result.presentation.title);
-      router.push(`/presentation/generate/${result.presentation.id}`);
+      router.replace(`/presentation/${result.presentation.id}`);
     } catch (error) {
       console.error(error);
       toast.error("Failed to create presentation");
     } finally {
       setIsCreating(false);
-      if (blank) {
-        void refetch();
-      }
     }
   };
 
@@ -130,7 +145,9 @@ export function PresentationDashboard() {
               className="min-h-36 resize-none"
             />
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <ModelPicker />
+
               <div className="space-y-2">
                 <div className="text-sm font-medium">Slides</div>
                 <Select
@@ -184,7 +201,7 @@ export function PresentationDashboard() {
             <div className="flex flex-wrap gap-3">
               <Button
                 className="cursor-pointer bg-[#4e0da3] hover:bg-[#4e0da3]"
-                onClick={() => void createPresentation(false)}
+                onClick={() => void createPresentation()}
                 disabled={isCreating || !presentationInput.trim()}
               >
                 {isCreating ? (
@@ -196,7 +213,7 @@ export function PresentationDashboard() {
               </Button>
               {/* <Button
                 variant="outline"
-                onClick={() => void createPresentation(true)}
+                onClick={() => void createBlank()}
                 disabled={isCreating}
               >
                 <FilePlus2 className="mr-2 h-4 w-4" />

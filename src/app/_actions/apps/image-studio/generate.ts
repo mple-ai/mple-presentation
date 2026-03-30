@@ -6,17 +6,12 @@ import {
 } from "@/app/_actions/image/generate";
 import { utapi } from "@/app/api/uploadthing/core";
 import { env } from "@/env";
+import { requireOptionalIntegration } from "@/lib/env/optional-integrations";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { fal } from "@fal-ai/client";
 import { UTFile } from "uploadthing/server";
 import { type FalImageModelList, type ImageModelList } from "./constants";
-
-if (env.FAL_API_KEY) {
-  fal.config({
-    credentials: env.FAL_API_KEY,
-  });
-}
 
 async function persistGeneratedImage(
   imageUrl: string,
@@ -53,12 +48,23 @@ async function generateFalImage(
   model: FalImageModelList,
   userId: string,
 ) {
-  if (!env.FAL_API_KEY) {
+  const falConfig = requireOptionalIntegration({
+    integration: "FAL",
+    envVar: "FAL_API_KEY",
+    value: env.FAL_API_KEY,
+    feature: "AI image generation",
+  });
+
+  if (!falConfig.ok) {
     return {
       success: false,
-      error: "FAL_API_KEY is not configured",
+      error: falConfig.error,
     };
   }
+
+  fal.config({
+    credentials: falConfig.value,
+  });
 
   const result = await fal.subscribe(model, {
     input: {

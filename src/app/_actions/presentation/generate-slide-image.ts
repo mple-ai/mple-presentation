@@ -1,8 +1,7 @@
 "use server";
 
-import { utapi } from "@/app/api/uploadthing/core";
-import { auth } from "@/server/auth";
 import { generateImageAction } from "@/app/_actions/apps/image-studio/generate";
+import { auth } from "@/server/auth";
 
 const DEFAULT_SLIDE_IMAGE_MODEL = "black-forest-labs/FLUX.1-schnell";
 
@@ -28,11 +27,52 @@ export async function generateSlideImageAction(
   }
 
   try {
+    // const falConfig = requireOptionalIntegration({
+    //   integration: "FAL",
+    //   envVar: "FAL_API_KEY",
+    //   value: env.FAL_API_KEY,
+    //   feature: "slide image generation",
+    // });
+
+    // if (!falConfig.ok) {
+    //   return {
+    //     success: false,
+    //     error: falConfig.error,
+    //   };
+    // }
+
+    // fal.config({
+    //   credentials: falConfig.value,
+    // });
+
     console.log(`Generating slide image with model: ${imageModel}`);
 
     const result = await generateImageAction(prompt, imageModel as any);
 
     return result;
+    // const falConfig = requireOptionalIntegration({
+    //   integration: "FAL",
+    //   envVar: "FAL_API_KEY",
+    //   value: env.FAL_API_KEY,
+    //   feature: "slide image generation",
+    // });
+
+    // if (!falConfig.ok) {
+    //   return {
+    //     success: false,
+    //     error: falConfig.error,
+    //   };
+    // }
+
+    // fal.config({
+    //   credentials: falConfig.value,
+    // });
+
+    // console.log(`Generating slide image with model: ${imageModel}`);
+
+    // const result = await generateImageAction(prompt, imageModel as any);
+
+    // return result;
   } catch (error) {
     console.error("Error generating slide image:", error);
     return {
