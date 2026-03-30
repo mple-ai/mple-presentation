@@ -1,6 +1,10 @@
 import { auth } from "@/server/auth";
 import { NextResponse, type NextRequest } from "next/server";
 
+const log = (step: string, data?: Record<string, unknown>) => {
+  console.log(JSON.stringify({ step, ...data }));
+};
+
 export async function proxy(request: NextRequest) {
   const session = await auth();
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
@@ -22,36 +26,68 @@ export async function proxy(request: NextRequest) {
     const port = process.env.PORT ?? "3005";
     const authUrl = new URL("/api/auth/cognito", `http://localhost:${port}`);
 
+    log("middleware:token_found", {
+      port,
+      authUrl: authUrl.toString(),
+      hasExistingSession: !!session,
+      existingCookies:
+        request.headers
+          .get("cookie")
+          ?.split(";")
+          .map((c) => c.trim().split("=")[0]) ?? [], // log cookie names only, not values
+    });
+
     try {
       const authRes = await fetch(authUrl.toString(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Forward existing cookies so NextAuth can find any existing session
           cookie: request.headers.get("cookie") ?? "",
         },
         body: JSON.stringify({ token }),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      log("middleware:auth_response", {
+        status: authRes.status,
+        ok: authRes.ok,
+        // Log cookie names and their flags, not values
+        setCookies:
+          authRes.headers.getSetCookie?.()?.map((c) => {
+            const [nameVal, ...flags] = c.split(";");
+            const name = nameVal?.split("=")[0]?.trim();
+            return { name, flags: flags.map((f) => f.trim()) };
+          }) ?? [],
       });
 
       if (!authRes.ok) {
+        log("middleware:auth_failed", { status: authRes.status });
         return NextResponse.redirect(new URL("/auth/denied", request.url));
       }
 
-      // Redirect to clean URL (strip token + keep language param)
       const cleanUrl = request.nextUrl.clone();
       cleanUrl.searchParams.delete("token");
 
       const res = NextResponse.redirect(cleanUrl);
 
-      // Forward the session cookie set by NextAuth back to the browser
-      const setCookie = authRes.headers.get("set-cookie");
-      if (setCookie) {
-        res.headers.set("set-cookie", setCookie);
+      // Forward all cookies
+      const setCookies = authRes.headers.getSetCookie?.() ?? [];
+      for (const cookie of setCookies) {
+        res.headers.append("set-cookie", cookie);
       }
+
+      log("middleware:redirecting", {
+        to: cleanUrl.toString(),
+        cookiesForwarded: setCookies.length,
+      });
 
       return res;
     } catch (err) {
-      console.error("Middleware cognito auth failed:", err);
+      log("middleware:fetch_error", {
+        error: err instanceof Error ? err.message : String(err),
+        name: err instanceof Error ? err.name : "Unknown",
+        authUrl: authUrl.toString(),
+      });
       return NextResponse.redirect(new URL("/auth/denied", request.url));
     }
   }
@@ -63,6 +99,9 @@ export async function proxy(request: NextRequest) {
     !isDeniedPage &&
     !request.nextUrl.pathname.startsWith("/api")
   ) {
+    log("middleware:unauthenticated", {
+      pathname: request.nextUrl.pathname,
+    });
     return NextResponse.redirect(new URL("/auth/denied", request.url));
   }
 
