@@ -19,7 +19,8 @@ export async function proxy(request: NextRequest) {
 
   // If a cognito token is present -> handle auth here in middleware
   if (token) {
-    const authUrl = new URL("/api/auth/cognito", request.url);
+    const port = process.env.PORT ?? "3005";
+    const authUrl = new URL("/api/auth/cognito", `http://localhost:${port}`);
 
     try {
       const authRes = await fetch(authUrl.toString(), {
