@@ -10,6 +10,7 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
   const isDeniedPage = request.nextUrl.pathname.startsWith("/auth/denied");
   const token = request.nextUrl.searchParams.get("token");
+  const presentationId = request.nextUrl.searchParams.get("presentationId");
 
   // Always redirect from root to /presentation
   if (request.nextUrl.pathname === "/") {
@@ -68,6 +69,11 @@ export async function proxy(request: NextRequest) {
       const cleanUrl = request.nextUrl.clone();
       cleanUrl.searchParams.delete("token");
 
+      if (presentationId) {
+        cleanUrl.pathname = `/presentation/${presentationId}`;
+        cleanUrl.searchParams.delete("presentationId");
+      }
+
       const res = NextResponse.redirect(cleanUrl);
 
       // Forward all cookies
@@ -103,6 +109,18 @@ export async function proxy(request: NextRequest) {
       pathname: request.nextUrl.pathname,
     });
     return NextResponse.redirect(new URL("/auth/denied", request.url));
+  }
+
+  // If session exists and we have a presentationId, redirect directly to the edit page
+  if (
+    session &&
+    request.nextUrl.pathname === "/presentation" &&
+    presentationId
+  ) {
+    const editUrl = request.nextUrl.clone();
+    editUrl.pathname = `/presentation/${presentationId}`;
+    editUrl.searchParams.delete("presentationId");
+    return NextResponse.redirect(editUrl);
   }
 
   return NextResponse.next();

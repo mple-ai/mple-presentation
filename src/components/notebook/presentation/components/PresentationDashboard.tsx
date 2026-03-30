@@ -2,7 +2,6 @@
 
 import { fetchPresentations } from "@/app/_actions/notebook/presentation/fetchPresentations";
 import { createBlankPresentation } from "@/app/_actions/notebook/presentation/presentationActions";
-import { ModelPicker } from "@/components/notebook/presentation/components/ModelPicker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -146,7 +145,7 @@ export function PresentationDashboard() {
             />
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <ModelPicker />
+              {/* <ModelPicker /> */}
 
               <div className="space-y-2">
                 <div className="text-sm font-medium">Slides</div>

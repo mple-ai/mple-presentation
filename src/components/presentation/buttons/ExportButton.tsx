@@ -45,7 +45,7 @@ export function ExportButton() {
       setIsExporting(true);
       exportResultRef.current = null;
 
-      const { slides, currentPresentationTitle } =
+      const { slides, currentPresentationTitle, currentPresentationId } =
         usePresentationState.getState();
 
       if (slides.length === 0) {
@@ -96,7 +96,11 @@ export function ExportButton() {
 
         // Send the Data URL back to the parent app
         globalThis.parent.postMessage(
-          { type: "PRESENTATION_GENERATED", url: base64data },
+          {
+            type: "PRESENTATION_GENERATED",
+            url: base64data,
+            presentationId: currentPresentationId,
+          },
           "*",
         );
 

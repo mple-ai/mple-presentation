@@ -247,8 +247,13 @@ export default function PresentationGenerateWithIdPage() {
       return;
     }
 
+    // Prioritize core navigation to the edit page
     router.push(`/presentation/${id}`);
-    startPresentationGeneration();
+
+    // Use a small delay to allow the router to initiate before state-heavy generation starts
+    setTimeout(() => {
+      startPresentationGeneration();
+    }, 0);
   };
 
   const handleGenerateImageSlides = (model: ImageModelList) => {
@@ -261,9 +266,14 @@ export default function PresentationGenerateWithIdPage() {
       return;
     }
 
-    router.push(`/presentation/${id}`);
     setImageModel(model);
-    startImageSlideGeneration();
+    // Prioritize core navigation to the edit page
+    router.push(`/presentation/${id}`);
+
+    // Use a small delay to allow the router to initiate before state-heavy generation starts
+    setTimeout(() => {
+      startImageSlideGeneration();
+    }, 0);
   };
 
   if (isLoadingPresentation) {
