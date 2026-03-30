@@ -77,7 +77,6 @@ jobs:
             --execution-environment=gen2 \
             --set-env-vars="\
               NODE_ENV=production,\
-              PORT=3005,\   
               NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL_TEST }},\
               DATABASE_URL=${{ secrets.DATABASE_URL_TEST }},\
               NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }},\
