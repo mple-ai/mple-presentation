@@ -10,7 +10,6 @@ import { PresentationCustomizer } from "@/components/notebook/presentation/compo
 import { ThemeBackground } from "@/components/notebook/presentation/components/theme/ThemeBackground";
 import { ThemeSettings } from "@/components/notebook/presentation/components/theme/ThemeSettings";
 import { usePresentationTheme } from "@/components/presentation/providers/PresentationThemeProvider";
-import { HelpMenu } from "@/components/sidebar/help-menu";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -215,7 +214,6 @@ export default function PresentationGenerateWithIdPage() {
         );
         setPageBackground(next);
       }
-
     }
   }, [
     presentationData,
@@ -249,8 +247,13 @@ export default function PresentationGenerateWithIdPage() {
       return;
     }
 
+    // Prioritize core navigation to the edit page
     router.push(`/presentation/${id}`);
-    startPresentationGeneration();
+
+    // Use a small delay to allow the router to initiate before state-heavy generation starts
+    setTimeout(() => {
+      startPresentationGeneration();
+    }, 0);
   };
 
   const handleGenerateImageSlides = (model: ImageModelList) => {
@@ -263,9 +266,14 @@ export default function PresentationGenerateWithIdPage() {
       return;
     }
 
-    router.push(`/presentation/${id}`);
     setImageModel(model);
-    startImageSlideGeneration();
+    // Prioritize core navigation to the edit page
+    router.push(`/presentation/${id}`);
+
+    // Use a small delay to allow the router to initiate before state-heavy generation starts
+    setTimeout(() => {
+      startImageSlideGeneration();
+    }, 0);
   };
 
   if (isLoadingPresentation) {
@@ -316,7 +324,7 @@ export default function PresentationGenerateWithIdPage() {
           <div className="w-full sm:w-fit sm:flex-none">
             <Button
               size="lg"
-              className="w-full gap-2 px-8 sm:h-10 sm:w-auto sm:min-w-0 sm:px-5 sm:text-sm"
+              className="cursor-pointer w-full gap-2 px-8 sm:h-10 sm:w-auto sm:min-w-0 sm:px-5 sm:text-sm bg-[#4e0da3] hover:bg-[#4e0da3]"
               onClick={handleGenerate}
               disabled={isGeneratePresentationDisabled}
             >
@@ -327,9 +335,9 @@ export default function PresentationGenerateWithIdPage() {
         </div>
       </div>
 
-      <div className="fixed right-4 bottom-24 z-99999 sm:right-6 sm:bottom-2">
+      {/* <div className="fixed right-4 bottom-24 z-99999 sm:right-6 sm:bottom-2">
         <HelpMenu hideKeyboardShortcutsOnMobile />
-      </div>
+      </div> */}
     </ThemeBackground>
   );
 }

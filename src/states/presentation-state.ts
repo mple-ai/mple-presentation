@@ -1,5 +1,5 @@
-import { type Image as GeneratedImage } from "@/app/_actions/apps/image-studio/fetch";
 import { type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
+import { type Image as GeneratedImage } from "@/app/_actions/apps/image-studio/fetch";
 import { type PlateSlide } from "@/components/notebook/presentation/utils/parser";
 import { type ThemeProperties, type Themes } from "@/lib/presentation/themes";
 import { create } from "zustand";
@@ -31,6 +31,8 @@ export type RightPanelType =
 
 type PendingPresentationCreateRequest = {
   language: string;
+  modelId: string;
+  modelProvider: "openai" | "ollama" | "lmstudio";
   numSlides: number;
   prompt: string;
   webSearchEnabled: boolean;
@@ -53,6 +55,8 @@ interface PresentationState {
   imageSource: "automatic" | "ai" | "stock";
   stockImageProvider: "unsplash" | "pixabay";
   presentationStyle: string;
+  modelProvider: "openai" | "ollama" | "lmstudio";
+  modelId: string;
   // New customization options
   textContent: "minimal" | "concise" | "detailed" | "extensive";
   tone:
@@ -151,6 +155,8 @@ interface PresentationState {
   setImageSource: (source: "automatic" | "ai" | "stock") => void;
   setStockImageProvider: (provider: "unsplash" | "pixabay") => void;
   setPresentationStyle: (style: string) => void;
+  setModelProvider: (provider: "openai" | "ollama" | "lmstudio") => void;
+  setModelId: (id: string) => void;
   setTextContent: (
     content: "minimal" | "concise" | "detailed" | "extensive",
   ) => void;
@@ -355,9 +361,11 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   theme: "mystique",
   customThemeData: null,
   imageModel: "black-forest-labs/FLUX.1-schnell",
-  imageSource: "automatic",
+  imageSource: "ai",
   stockImageProvider: "unsplash",
   presentationStyle: "professional",
+  modelProvider: "openai",
+  modelId: "",
   textContent: "concise",
   tone: "auto",
   audience: "auto",
@@ -603,6 +611,8 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   setImageSource: (source) => set({ imageSource: source }),
   setStockImageProvider: (provider) => set({ stockImageProvider: provider }),
   setPresentationStyle: (style) => set({ presentationStyle: style }),
+  setModelProvider: (provider) => set({ modelProvider: provider }),
+  setModelId: (id) => set({ modelId: id }),
   setTextContent: (content) => set({ textContent: content }),
   setTone: (tone) => set({ tone }),
   setAudience: (audience) => set({ audience }),

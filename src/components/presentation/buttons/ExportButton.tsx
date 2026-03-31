@@ -45,7 +45,7 @@ export function ExportButton() {
       setIsExporting(true);
       exportResultRef.current = null;
 
-      const { slides, currentPresentationTitle } =
+      const { slides, currentPresentationTitle, currentPresentationId } =
         usePresentationState.getState();
 
       if (slides.length === 0) {
@@ -86,7 +86,7 @@ export function ExportButton() {
         currentPresentationTitle ?? "presentation",
       );
 
-      handleDownload();
+      // handleDownload();
 
       const { blob } = exportResultRef.current;
 
@@ -96,7 +96,11 @@ export function ExportButton() {
 
         // Send the Data URL back to the parent app
         globalThis.parent.postMessage(
-          { type: "PRESENTATION_GENERATED", url: base64data },
+          {
+            type: "PRESENTATION_GENERATED",
+            url: base64data,
+            presentationId: currentPresentationId,
+          },
           "*",
         );
 
@@ -131,26 +135,25 @@ export function ExportButton() {
     <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="ghost"
-          size="sm"
-          className="relative h-9 w-9 px-0 text-muted-foreground hover:text-foreground sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3"
+          size="lg"
+          className="relative h-9 w-9 px-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3 bg-[#4e0da3] hover:bg-[#4e0da3]"
           aria-label="Export presentation"
         >
           <SaveStatus className="absolute top-1 right-1 sm:static" />
-          <Download className="h-4 w-4 sm:mr-1" />
-          <span className="hidden sm:inline">Export</span>
+          {/* <Download className="h-4 w-4 sm:mr-1" /> */}
+          <span className="hidden sm:inline">Continue</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Export Presentation</DialogTitle>
+          <DialogTitle>Proceed?</DialogTitle>
           <DialogDescription>
-            Export your presentation as a PowerPoint file.
+            Proceed with your presentation as a PowerPoint file.
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4">
-          <Label className="mb-2 block">Export Format</Label>
+          <Label className="mb-2 block">Format</Label>
           <RadioGroup value="pptx" className="grid gap-4">
             <div className="flex cursor-pointer items-start space-x-4 rounded-xl border border-primary bg-accent/50 p-4 ring-1 ring-primary">
               <RadioGroupItem value="pptx" id="pptx" className="mt-3" />
@@ -178,6 +181,7 @@ export function ExportButton() {
 
         <DialogFooter>
           <Button
+            className="cursor-pointer"
             type="button"
             variant="secondary"
             onClick={() => setIsExportDialogOpen(false)}
@@ -185,14 +189,19 @@ export function ExportButton() {
           >
             Cancel
           </Button>
-          <Button type="button" onClick={handleExport} disabled={isExporting}>
+          <Button
+            className="cursor-pointer"
+            type="button"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
             {isExporting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exporting...
+                Saving...
               </>
             ) : (
-              "Export to PowerPoint"
+              "Continue"
             )}
           </Button>
         </DialogFooter>

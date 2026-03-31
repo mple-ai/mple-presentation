@@ -6,7 +6,7 @@ import { type Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
 
 const REGION = env.COGNITO_REGION;
 const USER_POOL_ID = env.COGNITO_USER_POOL_ID;
@@ -35,6 +35,36 @@ declare module "next-auth" {
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   trustHost: true,
+  // Allow cookies to be sent when embedded in a cross-origin iframe
+  cookies: {
+    csrfToken: {
+      name: "next-auth.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none" as const,
+        path: "/",
+        secure: true,
+      },
+    },
+    sessionToken: {
+      name: "__Secure-next-auth.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "none" as const,
+        path: "/",
+        secure: true,
+      },
+    },
+    callbackUrl: {
+      name: "next-auth.callback-url",
+      options: {
+        httpOnly: true,
+        sameSite: "none" as const,
+        path: "/",
+        secure: true,
+      },
+    },
+  },
 
   session: {
     strategy: "jwt",
@@ -56,16 +86,28 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       credentials: {
         token: {},
       },
+
       async authorize(credentials) {
         try {
           const token = credentials?.token as string | undefined;
           if (!token) return null;
 
-          // 🔐 Verify Cognito JWT
-          const { payload } = await jwtVerify(token, JWKS, {
-            issuer,
-            audience: CLIENT_ID,
-          });
+          // 🔐 Verify Cognito JWT (handle expired tokens gracefully)
+          let payload: ReturnType<typeof decodeJwt>;
+
+          try {
+            const result = await jwtVerify(token, JWKS, {
+              issuer,
+              audience: CLIENT_ID,
+            });
+            payload = result.payload;
+          } catch (e) {
+            if ((e as { code?: string }).code === "ERR_JWT_EXPIRED") {
+              payload = decodeJwt(token);
+            } else {
+              throw e;
+            }
+          }
 
           const email = payload.email as string;
           const name = payload.name as string;

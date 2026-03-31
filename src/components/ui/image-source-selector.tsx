@@ -1,6 +1,9 @@
 "use client";
 
-import { TOGETHER_IMAGE_MODELS, type ImageModelList } from "@/app/_actions/apps/image-studio/constants";
+import {
+  TOGETHER_IMAGE_MODELS,
+  type ImageModelList,
+} from "@/app/_actions/apps/image-studio/constants";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Image, Wand2 } from "lucide-react";
+import { Wand2 } from "lucide-react";
 
 export const IMAGE_MODELS = TOGETHER_IMAGE_MODELS;
 
@@ -86,14 +89,14 @@ export function ImageSourceSelector({
               </SelectItem>
             ))}
           </SelectGroup>
-          <SelectGroup>
+          {/* <SelectGroup>
             <SelectLabel className="flex items-center gap-1 text-primary/80">
               <Image size={10} />
               Stock Images
             </SelectLabel>
             <SelectItem value="stock-unsplash">Unsplash</SelectItem>
             <SelectItem value="stock-pixabay">Pixabay</SelectItem>
-          </SelectGroup>
+          </SelectGroup> */}
         </SelectContent>
       </Select>
     </div>
