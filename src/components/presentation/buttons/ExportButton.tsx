@@ -28,6 +28,13 @@ export function ExportButton() {
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const exportResultRef = useRef<{ blob: Blob; fileName: string } | null>(null);
+  const { isGeneratingPresentation, rootImageGeneration } =
+    usePresentationState();
+
+  const isImageGenerating = Object.values(rootImageGeneration).some(
+    (gen) => gen.status === "queued" || gen.status === "generating",
+  );
+  const isGenerationInProgress = isGeneratingPresentation || isImageGenerating;
 
   const handleDownload = () => {
     if (!exportResultRef.current) {
@@ -136,12 +143,21 @@ export function ExportButton() {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className="relative h-9 w-9 px-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3 bg-[#4e0da3] hover:bg-[#4e0da3]"
+          className="relative h-9 w-9 px-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3 bg-[#4e0da3] hover:bg-[#4e0da3] cursor-pointer"
           aria-label="Export presentation"
+          disabled={isGenerationInProgress}
         >
           <SaveStatus className="absolute top-1 right-1 sm:static" />
           {/* <Download className="h-4 w-4 sm:mr-1" /> */}
-          <span className="hidden sm:inline">Continue</span>
+          <span className="hidden sm:inline">
+            {isGenerationInProgress ? (
+              <div className="flex items-center gap-1.5">
+                <span>Generating...</span>
+              </div>
+            ) : (
+              "Continue"
+            )}
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -193,7 +209,7 @@ export function ExportButton() {
             className="cursor-pointer"
             type="button"
             onClick={handleExport}
-            disabled={isExporting}
+            disabled={isExporting || isGenerationInProgress}
           >
             {isExporting ? (
               <>
