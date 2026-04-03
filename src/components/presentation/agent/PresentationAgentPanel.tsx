@@ -1,7 +1,6 @@
 "use client";
 
 import { getPresentationMessages } from "@/app/_actions/presentation/getPresentationMessages";
-import { ModelPicker } from "@/components/notebook/presentation/components/ModelPicker";
 import { serializeSlidesToXml } from "@/components/notebook/presentation/utils/slide-serializer";
 import { AILoadingLabel } from "@/components/ui/ai-loading-label";
 import { Button } from "@/components/ui/button";
@@ -20,8 +19,8 @@ import {
 import { cn } from "@/lib/utils";
 import { usePresentationState } from "@/states/presentation-state";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type FileUIPart } from "ai";
 import { useQuery } from "@tanstack/react-query";
+import { DefaultChatTransport, type FileUIPart } from "ai";
 import {
   Bot,
   BrushCleaning,
@@ -69,17 +68,11 @@ export function PresentationAgentPanel() {
     [modelId, modelProvider],
   );
 
-  const {
-    messages,
-    sendMessage,
-    setMessages,
-    regenerate,
-    stop,
-    status,
-  } = useChat({
-    id: currentPresentationId ?? undefined,
-    transport,
-  });
+  const { messages, sendMessage, setMessages, regenerate, stop, status } =
+    useChat({
+      id: currentPresentationId ?? undefined,
+      transport,
+    });
 
   const isStreaming = status === "submitted" || status === "streaming";
   const [isExecutingToolCall, setIsExecutingToolCall] = useState(false);
@@ -124,9 +117,7 @@ export function PresentationAgentPanel() {
       return;
     }
 
-    let nextToolPart:
-      | (typeof lastMessage.parts)[number]
-      | undefined;
+    let nextToolPart: (typeof lastMessage.parts)[number] | undefined;
 
     for (const part of lastMessage.parts) {
       if (
@@ -340,13 +331,12 @@ export function PresentationAgentPanel() {
           </div>
         </div>
 
-        <div className="mt-3 space-y-1.5">
+        {/* <div className="mt-3 space-y-1.5">
           <ModelPicker />
           <p className="text-xs text-muted-foreground">
             Choose the model for the next agent response.
           </p>
-        </div>
-
+        </div> */}
       </div>
 
       <ScrollArea className="max-h-full flex-1 px-3 py-4">
@@ -366,7 +356,9 @@ export function PresentationAgentPanel() {
 
           {messages.map((message, index) => {
             if (message.role === "user") {
-              return <HumanMessageComponent message={message} key={message.id} />;
+              return (
+                <HumanMessageComponent message={message} key={message.id} />
+              );
             }
 
             if (message.role === "assistant") {
@@ -388,9 +380,11 @@ export function PresentationAgentPanel() {
           {isStreaming &&
           messages.at(-1) &&
           (messages.at(-1)!.role === "user" ||
-            !messages.at(-1)!.parts.some(
-              (part) => part.type === "text" && part.text.trim().length > 0,
-            )) ? (
+            !messages
+              .at(-1)!
+              .parts.some(
+                (part) => part.type === "text" && part.text.trim().length > 0,
+              )) ? (
             <div className="flex justify-start">
               <div className="rounded-lg bg-muted px-3 py-2">
                 <AILoadingLabel
@@ -450,7 +444,10 @@ export function PresentationAgentPanel() {
             disabled={images.length >= MAX_IMAGES || isAgentRunning}
             className="rounded-xl"
           >
-            <label htmlFor="presentation-agent-file-input" className="cursor-pointer">
+            <label
+              htmlFor="presentation-agent-file-input"
+              className="cursor-pointer"
+            >
               <Paperclip className="h-4 w-4" />
               <span className="sr-only">Attach image</span>
             </label>
@@ -486,7 +483,9 @@ export function PresentationAgentPanel() {
                   isLoading ||
                   isPending
             }
-            aria-label={isAgentRunning ? "Stop current execution" : "Send message"}
+            aria-label={
+              isAgentRunning ? "Stop current execution" : "Send message"
+            }
             className={cn(
               isAgentRunning ? "h-11 w-16 rounded-full p-1.5" : "rounded-xl",
               isAgentRunning &&

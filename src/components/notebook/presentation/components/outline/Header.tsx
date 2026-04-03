@@ -1,6 +1,5 @@
 "use client";
 
-import { ModelPicker } from "@/components/notebook/presentation/components/ModelPicker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,7 +146,7 @@ export function Header() {
 
             {/* Settings row — labeled selects + toggle */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <ModelPicker />
+              {/* <ModelPicker /> */}
 
               {/* Number of slides */}
               <div className="space-y-1.5">
