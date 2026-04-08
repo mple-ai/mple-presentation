@@ -19,6 +19,7 @@ import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import PresentationFileUpload from "../file-upload";
 
 const LANGUAGES = [
   ["en-US", "English"],
@@ -54,6 +55,7 @@ export function PresentationDashboard() {
     setPendingCreateRequest,
     setTheme,
     resetPresentationState,
+    files,
   } = usePresentationState();
 
   const { data, isLoading } = useQuery({
@@ -69,13 +71,59 @@ export function PresentationDashboard() {
 
   const createPresentation = async () => {
     setIsCreating(true);
-    const prompt = presentationInput.trim();
+    let prompt = presentationInput.trim();
     const selectedLanguage = language;
     const selectedNumSlides = numSlides;
     const selectedWebSearchEnabled = webSearchEnabled;
-    resetPresentationState();
+
+    // Declare outside so finally block can always clear it
+    let toastId: string | number | undefined;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55000); // just under maxDuration
 
     try {
+      if (files.length > 0) {
+        const formData = new FormData();
+        for (const file of files) {
+          formData.append("files", file);
+        }
+        formData.append("prompt", prompt);
+
+        try {
+          const response = await fetch("/api/admin/ppt", {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.context) {
+              prompt = `Context from provided documents:\n${data.context}\n\nUser Request: ${prompt}`;
+            }
+          } else {
+            console.warn("RAG search failed, proceeding with original prompt");
+            toast.warning(
+              "Could not analyze documents. Proceeding without context.",
+            );
+          }
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") {
+            toast.warning(
+              "Document analysis timed out. Proceeding with original prompt.",
+            );
+          } else {
+            console.error("RAG Error:", error);
+            toast.warning(
+              "Could not analyze documents. Proceeding without context.",
+            );
+          }
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+
+      resetPresentationState();
       setPendingCreateRequest({
         prompt,
         language: selectedLanguage,
@@ -144,10 +192,13 @@ export function PresentationDashboard() {
               className="min-h-36 resize-none"
             />
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {/* <ModelPicker /> */}
+            <div className="flex w-full  p-4">
+              <div className="w-1/2 space-y-2">
+                <div className="text-sm font-medium">Reference Files</div>
+                <PresentationFileUpload />
+              </div>
 
-              <div className="space-y-2">
+              <div className="ml-auto w-40 space-y-2">
                 <div className="text-sm font-medium">Slides</div>
                 <Select
                   value={String(numSlides)}
@@ -156,7 +207,7 @@ export function PresentationDashboard() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto">
                     {slidesOptions.map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
@@ -165,39 +216,9 @@ export function PresentationDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* <div className="space-y-2">
-                <div className="text-sm font-medium">Language</div>
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div> */}
-
-              {/* <div className="space-y-2">
-                <div className="text-sm font-medium">Web search</div>
-                <div className="flex h-10 items-center justify-between rounded-md border px-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Globe className="h-4 w-4" />
-                    {webSearchEnabled ? "Enabled" : "Disabled"}
-                  </div>
-                  <Switch
-                    checked={webSearchEnabled}
-                    onCheckedChange={setWebSearchEnabled}
-                  />
-                </div>
-              </div> */}
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex justify-end gap-3 ml-auto ">
               <Button
                 className="cursor-pointer bg-[#4e0da3] hover:bg-[#4e0da3]"
                 onClick={() => void createPresentation()}

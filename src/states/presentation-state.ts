@@ -44,6 +44,7 @@ interface PresentationState {
   isGridView: boolean;
   isSheetOpen: boolean;
   numSlides: number;
+  files: File[];
 
   theme: Themes | string;
   customThemeData: ThemeProperties | null;
@@ -142,6 +143,7 @@ interface PresentationState {
   setShouldShowExitHeader: (udpdate: boolean) => void;
   thumbnailUrl?: string;
   setThumbnailUrl: (url: string | undefined) => void;
+  setFiles: (files: File[]) => void;
   setLanguage: (lang: string) => void;
   setPageStyle: (style: string) => void;
   setShowTemplates: (show: boolean) => void;
@@ -351,6 +353,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   thumbnailUrl: undefined,
   setThumbnailUrl: (url) => set({ thumbnailUrl: url }),
   numSlides: 10,
+  files: [],
   language: "en-US",
   pageStyle: "default",
   showTemplates: false,
@@ -588,6 +591,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   setCurrentPresentation: (id, title) =>
     set({ currentPresentationId: id, currentPresentationTitle: title }),
   setIsGridView: (isGrid) => set({ isGridView: isGrid }),
+  setFiles: (files) => set({ files }),
   setIsSheetOpen: (isOpen) => set({ isSheetOpen: isOpen }),
   setNumSlides: (num) => set({ numSlides: num }),
   setLanguage: (lang) => set({ language: lang }),
@@ -760,6 +764,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
       currentPresentationId: null,
       currentPresentationTitle: null,
       presentationInput: "",
+      files: [],
       outline: [],
       slides: [],
       searchResults: [],

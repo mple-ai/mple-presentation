@@ -27,6 +27,7 @@ export const env = createEnv({
     COGNITO_REGION: z.string(),
     COGNITO_USER_POOL_ID: z.string(),
     COGNITO_CLIENT_ID: z.string(),
+    BACKEND_URL: z.string(),
   },
 
   runtimeEnv: {
@@ -45,6 +46,7 @@ export const env = createEnv({
     COGNITO_REGION: process.env.COGNITO_REGION,
     COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
     COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID,
+    BACKEND_URL: process.env.BACKEND_URL,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
