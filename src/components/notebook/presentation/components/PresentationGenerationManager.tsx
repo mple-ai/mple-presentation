@@ -77,11 +77,13 @@ function hasGeneratedOutline(outline: string[]): boolean {
 }
 
 function parseOutlineItems(content: string): string[] {
-  if (!/^#\s+/m.test(content)) {
+  const firstHeadingMatch = content.match(/^# /m);
+  if (!firstHeadingMatch) {
     return [];
   }
 
-  const sections = content.split(/^# /gm).filter(Boolean);
+  const outlineContent = content.slice(firstHeadingMatch.index);
+  const sections = outlineContent.split(/^# /gm).filter(Boolean);
   return sections.length > 0
     ? sections.map((section) => `# ${section}`.trim())
     : [];

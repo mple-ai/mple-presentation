@@ -56,7 +56,7 @@ export default function PresentationHeader({ title }: PresentationHeaderProps) {
         <div className="flex min-w-0 items-center gap-2">
           {/* This component is suppose to be logo but for now its is actually hamburger menu */}
 
-          <Link href="/presentations">
+          <Link href="/presentation">
             <Button size={"icon"} className="rounded-full" variant={"ghost"}>
               <Brain></Brain>
             </Button>
@@ -85,7 +85,7 @@ export default function PresentationHeader({ title }: PresentationHeaderProps) {
       {/* Left section with breadcrumb navigation */}
       {/* <div className="flex min-w-0 flex-1 items-center gap-2">
         <Link
-          href="/presentations"
+          href="/presentation"
           className="text-muted-foreground hover:text-foreground"
         >
           <Brain className="h-5 w-5"></Brain>

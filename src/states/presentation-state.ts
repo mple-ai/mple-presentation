@@ -756,7 +756,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
       outlineTemplateOverrides: {},
     })),
 
-  // Comprehensive reset when navigating back to /presentations page
+  // Comprehensive reset when navigating back to /presentation page
   resetPresentationState: () =>
     set(() => ({
       ...getPresentModeResetState(),

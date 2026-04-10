@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import PresentationFileUpload from "../file-upload";
 
@@ -58,6 +58,22 @@ export function PresentationDashboard() {
     files,
   } = usePresentationState();
 
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "SET_PPT_DATA") {
+        if (event.data.prompt) {
+          setPresentationInput(event.data.prompt);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    // Signal to parent that we are ready to receive data
+    window.parent.postMessage({ type: "PPT_READY" }, "*");
+
+    return () => window.removeEventListener("message", handleMessage);
+  }, [setPresentationInput]);
+
   const { data, isLoading } = useQuery({
     queryKey: ["presentations"],
     queryFn: () => fetchPresentations(0),
@@ -69,77 +85,109 @@ export function PresentationDashboard() {
     [],
   );
 
-  const createPresentation = async () => {
-    setIsCreating(true);
-    let prompt = presentationInput.trim();
-    const selectedLanguage = language;
-    const selectedNumSlides = numSlides;
-    const selectedWebSearchEnabled = webSearchEnabled;
+  const createPresentation = useCallback(
+    async (autoData?: {
+      prompt: string;
+      files: File[];
+      numSlides: number;
+      language: string;
+    }) => {
+      setIsCreating(true);
+      let prompt = (autoData?.prompt ?? presentationInput).trim();
+      const currentFiles = autoData?.files ?? files;
+      const selectedLanguage = autoData?.language ?? language;
+      let selectedNumSlides = autoData?.numSlides ?? numSlides;
+      const selectedWebSearchEnabled = webSearchEnabled;
 
-    // Declare outside so finally block can always clear it
-    let toastId: string | number | undefined;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 55000); // just under maxDuration
+      // Declare outside so finally block can always clear it
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 55000); // just under maxDuration
 
-    try {
-      if (files.length > 0) {
-        const formData = new FormData();
-        for (const file of files) {
-          formData.append("files", file);
-        }
-        formData.append("prompt", prompt);
+      try {
+        if (currentFiles.length > 0) {
+          const formData = new FormData();
+          for (const file of currentFiles) {
+            formData.append("files", file);
+          }
+          formData.append("prompt", prompt);
 
-        try {
-          const response = await fetch("/api/admin/ppt", {
-            method: "POST",
-            body: formData,
-            signal: controller.signal,
-          });
+          try {
+            const response = await fetch("/api/admin/ppt", {
+              method: "POST",
+              body: formData,
+              signal: controller.signal,
+            });
 
-          if (response.ok) {
-            const data = await response.json();
-            if (data.context) {
-              prompt = `Context from provided documents:\n${data.context}\n\nUser Request: ${prompt}`;
+            if (response.ok) {
+              const data = await response.json();
+
+              if (data.numSlides) {
+                const apiNumSlides = Number(data.numSlides) || 10;
+                setNumSlides(apiNumSlides);
+                selectedNumSlides = apiNumSlides;
+              }
+
+              if (data.pptPrompt && data.context) {
+                prompt = `${data.pptPrompt}\n\nContext:\n${data.context}`;
+              } else if (data.pptPrompt) {
+                prompt = data.pptPrompt;
+              } else if (data.context) {
+                prompt = `Context from provided documents:\n${data.context}\n\nUser Request: ${prompt}`;
+              }
+            } else {
+              console.warn(
+                "RAG search failed, proceeding with original prompt",
+              );
+              toast.warning(
+                "Could not analyze documents. Proceeding without context.",
+              );
             }
-          } else {
-            console.warn("RAG search failed, proceeding with original prompt");
-            toast.warning(
-              "Could not analyze documents. Proceeding without context.",
-            );
+          } catch (error) {
+            if (error instanceof Error && error.name === "AbortError") {
+              toast.warning(
+                "Document analysis timed out. Proceeding with original prompt.",
+              );
+            } else {
+              console.error("RAG Error:", error);
+              toast.warning(
+                "Could not analyze documents. Proceeding without context.",
+              );
+            }
+          } finally {
+            clearTimeout(timeoutId);
           }
-        } catch (error) {
-          if (error instanceof Error && error.name === "AbortError") {
-            toast.warning(
-              "Document analysis timed out. Proceeding with original prompt.",
-            );
-          } else {
-            console.error("RAG Error:", error);
-            toast.warning(
-              "Could not analyze documents. Proceeding without context.",
-            );
-          }
-        } finally {
-          clearTimeout(timeoutId);
         }
-      }
 
-      resetPresentationState();
-      setPendingCreateRequest({
-        prompt,
-        language: selectedLanguage,
-        modelId,
-        modelProvider,
-        numSlides: selectedNumSlides,
-        webSearchEnabled: selectedWebSearchEnabled,
-      });
-      router.push("/presentation/create");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to create presentation");
-    } finally {
-      setIsCreating(false);
-    }
-  };
+        resetPresentationState();
+        setPendingCreateRequest({
+          prompt,
+          language: selectedLanguage,
+          modelId,
+          modelProvider,
+          numSlides: selectedNumSlides,
+          webSearchEnabled: selectedWebSearchEnabled,
+        });
+        router.push("/presentation/create");
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to create presentation");
+      } finally {
+        setIsCreating(false);
+      }
+    },
+    [
+      files,
+      language,
+      modelId,
+      modelProvider,
+      numSlides,
+      presentationInput,
+      resetPresentationState,
+      router,
+      setPendingCreateRequest,
+      webSearchEnabled,
+    ],
+  );
 
   const createBlank = async () => {
     if (isCreating) {
