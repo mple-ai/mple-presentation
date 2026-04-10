@@ -27,6 +27,7 @@ interface SlidesRequest {
   templateContext?: string;
   outlineTemplateHints?: Record<number, string>;
   selectedTemplateCount?: number; // Number of templates selected by user
+  generateSpeakerNotes?: boolean;
 }
 
 const DEFAULT_LAYOUTS = `
@@ -261,6 +262,8 @@ Vary layouts throughout for visual interest.
 ---
 
 Now generate the complete XML presentation with exactly {TOTAL_SLIDES} slides.
+
+{SPEAKER_NOTES_INSTRUCTIONS}
 `;
 
 // ============================================================================
@@ -453,9 +456,12 @@ export async function POST(req: Request) {
     routeLogger.info("Presentation generation request received", { requestId });
     const session = await auth();
     if (!session) {
-      routeLogger.warn("Presentation generation request rejected: unauthorized", {
-        requestId,
-      });
+      routeLogger.warn(
+        "Presentation generation request rejected: unauthorized",
+        {
+          requestId,
+        },
+      );
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -475,6 +481,7 @@ export async function POST(req: Request) {
       templateContext,
       outlineTemplateHints,
       selectedTemplateCount,
+      generateSpeakerNotes = false,
     } = (await req.json()) as SlidesRequest;
 
     if (!title || !outline || !Array.isArray(outline) || !language) {
@@ -597,6 +604,23 @@ export async function POST(req: Request) {
         templateCount,
         totalSlides,
       ),
+      SPEAKER_NOTES_INSTRUCTIONS: generateSpeakerNotes
+        ? `
+# SPEAKER NOTES REQUIREMENT
+For every slide, you MUST include a <NOTES> tag as the LAST child inside each <SECTION>.
+The <NOTES> tag should contain 3-5 sentences of speaker notes that:
+- Summarize the key message of the slide
+- Provide talking points for the presenter
+- Include any additional context or data not shown on the slide
+
+Example:
+<SECTION layout="left">
+  <H1>Slide Title</H1>
+  <P>Slide content...</P>
+  <IMG query="..." />
+  <NOTES>This slide introduces the concept of... The presenter should emphasize... Key data point to mention...</NOTES>
+</SECTION>`
+        : "",
     });
 
     routeLogger.info("Presentation generation stream created", {

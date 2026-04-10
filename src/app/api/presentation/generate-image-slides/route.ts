@@ -18,6 +18,7 @@ interface ImageSlidesRequest {
   language: string;
   modelId?: string;
   modelProvider?: "openai" | "ollama" | "lmstudio";
+  generateSpeakerNotes?: boolean;
 }
 
 const IMAGE_SLIDES_TEMPLATE = `You are an expert visual presentation designer. Create image-based slides where each slide is a full-screen image with ALL text rendered inside the image itself (no separate text overlays).
@@ -77,6 +78,8 @@ Create detailed, artistic prompts that:
 10. Do NOT include any example prompts in the output
 
 Now generate the complete XML presentation with exactly {TOTAL_SLIDES} image slides.
+
+{SPEAKER_NOTES_INSTRUCTIONS}
 `;
 
 export async function POST(req: Request) {
@@ -109,6 +112,7 @@ export async function POST(req: Request) {
       language,
       modelId,
       modelProvider = "openai",
+      generateSpeakerNotes = false,
     } = (await req.json()) as ImageSlidesRequest;
 
     if (!title || !outline || !Array.isArray(outline) || !language) {
@@ -198,6 +202,17 @@ export async function POST(req: Request) {
       LANGUAGE: language,
       OUTLINE_FORMATTED: outline.join("\n\n"),
       TOTAL_SLIDES: totalSlides,
+      SPEAKER_NOTES_INSTRUCTIONS: generateSpeakerNotes
+        ? `
+# SPEAKER NOTES REQUIREMENT
+For every slide, you MUST include a <NOTES> tag containing 3-5 sentences of speaker notes. 
+These notes should describe what is happening in the visual and explain the key message the presenter should convey.
+Example:
+<SECTION isImageSlide="true">
+  <IMG query="..." />
+  <NOTES>This slide shows the growth trajectory... The presenter should emphasize...</NOTES>
+</SECTION>`
+        : "",
     });
 
     routeLogger.info("Image slide generation stream created", {

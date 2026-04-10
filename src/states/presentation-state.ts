@@ -36,6 +36,7 @@ type PendingPresentationCreateRequest = {
   numSlides: number;
   prompt: string;
   webSearchEnabled: boolean;
+  generateSpeakerNotes: boolean;
 };
 
 interface PresentationState {
@@ -100,6 +101,7 @@ interface PresentationState {
   outline: string[];
   searchResults: Array<{ query: string; results: unknown[] }>; // Store search results for context
   webSearchEnabled: boolean; // Toggle for web search in outline generation
+  generateSpeakerNotes: boolean;
   slides: PlateSlide[]; // This now holds the new object structure
 
   // Root image generation tracking by slideId
@@ -153,6 +155,7 @@ interface PresentationState {
     results: Array<{ query: string; results: unknown[] }>,
   ) => void;
   setWebSearchEnabled: (enabled: boolean) => void;
+  setGenerateSpeakerNotes: (enabled: boolean) => void;
   setImageModel: (model: ImageModelList) => void;
   setImageSource: (source: "automatic" | "ai" | "stock") => void;
   setStockImageProvider: (provider: "unsplash" | "pixabay") => void;
@@ -361,6 +364,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   outline: [],
   searchResults: [],
   webSearchEnabled: false,
+  generateSpeakerNotes: false,
   theme: "mystique",
   customThemeData: null,
   imageModel: "black-forest-labs/FLUX.1-schnell",
@@ -611,6 +615,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   setOutline: (topics) => set({ outline: topics }),
   setSearchResults: (results) => set({ searchResults: results }),
   setWebSearchEnabled: (enabled) => set({ webSearchEnabled: enabled }),
+  setGenerateSpeakerNotes: (enabled) => set({ generateSpeakerNotes: enabled }),
   setImageModel: (model) => set({ imageModel: model }),
   setImageSource: (source) => set({ imageSource: source }),
   setStockImageProvider: (provider) => set({ stockImageProvider: provider }),
@@ -768,6 +773,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
       outline: [],
       slides: [],
       searchResults: [],
+      generateSpeakerNotes: false,
       rootImageGeneration: {},
       pageBackground: {},
       thumbnailUrl: undefined,

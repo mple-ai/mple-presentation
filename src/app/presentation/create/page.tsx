@@ -47,6 +47,7 @@ export default function Page() {
     setWebSearchEnabled,
     setTheme: setPresentationTheme,
     setFiles,
+    setGenerateSpeakerNotes,
   } = usePresentationState();
 
   const [phase, setPhase] = useState<LoadingPhase>(() => {
@@ -104,6 +105,7 @@ export default function Page() {
     setWebSearchEnabled(request.webSearchEnabled);
     state.setModelProvider(request.modelProvider);
     state.setModelId(request.modelId);
+    setGenerateSpeakerNotes(request.generateSpeakerNotes);
 
     void createAndNavigate(request.prompt, request.language);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { usePresentationState } from "@/states/presentation-state";
 import { useQuery } from "@tanstack/react-query";
@@ -56,6 +58,8 @@ export function PresentationDashboard() {
     setTheme,
     resetPresentationState,
     files,
+    generateSpeakerNotes,
+    setGenerateSpeakerNotes,
   } = usePresentationState();
 
   useEffect(() => {
@@ -98,6 +102,7 @@ export function PresentationDashboard() {
       const selectedLanguage = autoData?.language ?? language;
       let selectedNumSlides = autoData?.numSlides ?? numSlides;
       const selectedWebSearchEnabled = webSearchEnabled;
+      const selectedGenerateSpeakerNotes = generateSpeakerNotes;
 
       // Declare outside so finally block can always clear it
       const controller = new AbortController();
@@ -166,6 +171,7 @@ export function PresentationDashboard() {
           modelProvider,
           numSlides: selectedNumSlides,
           webSearchEnabled: selectedWebSearchEnabled,
+          generateSpeakerNotes: selectedGenerateSpeakerNotes,
         });
         router.push("/presentation/create");
       } catch (error) {
@@ -186,6 +192,7 @@ export function PresentationDashboard() {
       router,
       setPendingCreateRequest,
       webSearchEnabled,
+      generateSpeakerNotes,
     ],
   );
 
@@ -264,6 +271,22 @@ export function PresentationDashboard() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2 px-4">
+              <Checkbox
+                id="generateSpeakerNotes"
+                checked={generateSpeakerNotes}
+                onCheckedChange={(checked) =>
+                  setGenerateSpeakerNotes(checked === true)
+                }
+              />
+              <Label
+                htmlFor="generateSpeakerNotes"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Generate Speaker Notes
+              </Label>
             </div>
 
             <div className="flex justify-end gap-3 ml-auto ">

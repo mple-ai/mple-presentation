@@ -167,6 +167,7 @@ export type PlateSlide = {
     value?: string;
   };
   isImageSlide?: boolean;
+  notes?: string;
 };
 
 // Updated XMLNode to support mixed content (text and elements interleaved)
@@ -504,9 +505,15 @@ export class SlideParser {
     let rootImage:
       | { query: string; url?: string; layoutType?: LayoutType }
       | undefined;
+    let notes: string | undefined;
 
     for (const child of sectionNode.children) {
       if (!isElementNode(child)) continue;
+
+      if (child.tag.toUpperCase() === "NOTES") {
+        notes = this.getTextContent(child).trim();
+        continue;
+      }
 
       if (child.tag.toUpperCase() === "IMG") {
         if (child.originalTagContent) {
@@ -604,6 +611,7 @@ export class SlideParser {
       ...(rootImage ? { rootImage } : {}),
       ...(layoutType ? { layoutType: layoutType } : {}),
       ...(isImageSlide ? { isImageSlide: true } : {}),
+      ...(notes ? { notes } : {}),
       alignment: "center",
     };
   };
