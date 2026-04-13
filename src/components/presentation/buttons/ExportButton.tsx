@@ -40,8 +40,12 @@ export function ExportButton() {
       setIsExporting(true);
       exportResultRef.current = null;
 
-      const { slides, currentPresentationTitle, currentPresentationId } =
-        usePresentationState.getState();
+      const {
+        slides,
+        currentPresentationTitle,
+        currentPresentationId,
+        presentationInput,
+      } = usePresentationState.getState();
 
       if (slides.length === 0) {
         throw new Error("No slides to export");
@@ -95,6 +99,7 @@ export function ExportButton() {
             type: "PRESENTATION_GENERATED",
             url: base64data,
             presentationId: currentPresentationId,
+            prompt: presentationInput,
           },
           "*",
         );
