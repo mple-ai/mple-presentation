@@ -28,6 +28,7 @@ interface SlidesRequest {
   outlineTemplateHints?: Record<number, string>;
   selectedTemplateCount?: number; // Number of templates selected by user
   generateSpeakerNotes?: boolean;
+  notes?: boolean;
 }
 
 const DEFAULT_LAYOUTS = `
@@ -482,6 +483,7 @@ export async function POST(req: Request) {
       outlineTemplateHints,
       selectedTemplateCount,
       generateSpeakerNotes = false,
+      notes = false,
     } = (await req.json()) as SlidesRequest;
 
     if (!title || !outline || !Array.isArray(outline) || !language) {
@@ -605,20 +607,30 @@ export async function POST(req: Request) {
         totalSlides,
       ),
       SPEAKER_NOTES_INSTRUCTIONS: generateSpeakerNotes
-        ? `
+        ? notes
+          ? `
 # SPEAKER NOTES REQUIREMENT
 For every slide, you MUST include a <NOTES> tag as the LAST child inside each <SECTION>.
-The <NOTES> tag should contain 3-5 sentences of speaker notes that:
-- Summarize the key message of the slide
-- Provide talking points for the presenter
-- Include any additional context or data not shown on the slide
+We need to generate a voiceover so please generate the speaker notes as if you're generating a voiceover for the slide.
 
 Example:
 <SECTION layout="left">
   <H1>Slide Title</H1>
   <P>Slide content...</P>
   <IMG query="..." />
-  <NOTES>This slide introduces the concept of... The presenter should emphasize... Key data point to mention...</NOTES>
+  <NOTES>This slide introduces the concept of... Key data point to mention...</NOTES>
+</SECTION>`
+          : `
+# SPEAKER NOTES REQUIREMENT
+For every slide, you MUST include a <NOTES> tag as the LAST child inside each <SECTION>.
+Your speaker notes will further be read by an ai bot to explain more about the slide so generate notes like you're giving an instruction to the ai bot to explain about the slide.
+
+Example:
+<SECTION layout="left">
+  <H1>Slide Title</H1>
+  <P>Slide content...</P>
+  <IMG query="..." />
+  <NOTES>Explain about the concept of... Emphasize the point on...</NOTES>
 </SECTION>`
         : "",
     });

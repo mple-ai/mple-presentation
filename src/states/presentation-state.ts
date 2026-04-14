@@ -37,6 +37,7 @@ type PendingPresentationCreateRequest = {
   prompt: string;
   webSearchEnabled: boolean;
   generateSpeakerNotes: boolean;
+  notes: boolean;
 };
 
 interface PresentationState {
@@ -102,6 +103,7 @@ interface PresentationState {
   searchResults: Array<{ query: string; results: unknown[] }>; // Store search results for context
   webSearchEnabled: boolean; // Toggle for web search in outline generation
   generateSpeakerNotes: boolean;
+  notes: boolean;
   slides: PlateSlide[]; // This now holds the new object structure
 
   // Root image generation tracking by slideId
@@ -156,6 +158,7 @@ interface PresentationState {
   ) => void;
   setWebSearchEnabled: (enabled: boolean) => void;
   setGenerateSpeakerNotes: (enabled: boolean) => void;
+  setNotes: (notes: boolean) => void;
   setImageModel: (model: ImageModelList) => void;
   setImageSource: (source: "automatic" | "ai" | "stock") => void;
   setStockImageProvider: (provider: "unsplash" | "pixabay") => void;
@@ -365,6 +368,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   searchResults: [],
   webSearchEnabled: false,
   generateSpeakerNotes: false,
+  notes: false,
   theme: "mystique",
   customThemeData: null,
   imageModel: "black-forest-labs/FLUX.1-schnell",
@@ -616,6 +620,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   setSearchResults: (results) => set({ searchResults: results }),
   setWebSearchEnabled: (enabled) => set({ webSearchEnabled: enabled }),
   setGenerateSpeakerNotes: (enabled) => set({ generateSpeakerNotes: enabled }),
+  setNotes: (notes) => set({ notes: notes }),
   setImageModel: (model) => set({ imageModel: model }),
   setImageSource: (source) => set({ imageSource: source }),
   setStockImageProvider: (provider) => set({ stockImageProvider: provider }),
@@ -774,6 +779,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
       slides: [],
       searchResults: [],
       generateSpeakerNotes: false,
+      notes: false,
       rootImageGeneration: {},
       pageBackground: {},
       thumbnailUrl: undefined,

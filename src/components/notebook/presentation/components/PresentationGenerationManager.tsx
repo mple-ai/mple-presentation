@@ -132,6 +132,7 @@ export function PresentationGenerationManager() {
     audience,
     scenario,
     generateSpeakerNotes,
+    notes,
   } = usePresentationState();
 
   // Persist slide updates during generation using debounced saves to limit frequency
@@ -687,6 +688,7 @@ export function PresentationGenerationManager() {
           outlineTemplateHints,
           selectedTemplateCount: selectedSlideTemplates.length,
           generateSpeakerNotes,
+          notes,
         },
       });
     }
@@ -733,6 +735,7 @@ export function PresentationGenerationManager() {
           modelId,
           modelProvider,
           generateSpeakerNotes,
+          notes,
         },
       });
     }

@@ -48,6 +48,7 @@ export default function Page() {
     setTheme: setPresentationTheme,
     setFiles,
     setGenerateSpeakerNotes,
+    setNotes,
   } = usePresentationState();
 
   const [phase, setPhase] = useState<LoadingPhase>(() => {
@@ -106,6 +107,7 @@ export default function Page() {
     state.setModelProvider(request.modelProvider);
     state.setModelId(request.modelId);
     setGenerateSpeakerNotes(request.generateSpeakerNotes);
+    setNotes(request.notes);
 
     void createAndNavigate(request.prompt, request.language);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,7 +116,7 @@ export default function Page() {
   // Path B: SET_PPT_DATA from parent iframe (does its own RAG if files are present)
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
-      const { type, files: incomingFiles, prompt } = event.data || {};
+      const { type, files: incomingFiles, prompt, notes: incomingNotes } = event.data || {};
 
       if (type !== "SET_PPT_DATA" || startedRef.current) return;
       startedRef.current = true;
@@ -189,6 +191,12 @@ export default function Page() {
       // Apply final values and proceed to outline generation
       setPresentationInput(finalPrompt);
       setNumSlides(totalSlides);
+ 
+      const notes = incomingNotes ?? params.get("notes");
+      if (notes !== null) {
+        setNotes(notes === "true" || notes === true);
+      }
+      setGenerateSpeakerNotes(true);
 
       void createAndNavigate(finalPrompt, language);
     };

@@ -1,14 +1,14 @@
-import { createUIMessageStreamResponse } from "ai";
 import {
   assertModelIsConfigured,
   ensureModelIsReady,
   modelPicker,
 } from "@/lib/modelPicker";
 import { createLogger } from "@/lib/observability/logger";
-import { toUIMessageStream } from "@ai-sdk/langchain";
 import { auth } from "@/server/auth";
+import { toUIMessageStream } from "@ai-sdk/langchain";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
+import { createUIMessageStreamResponse } from "ai";
 import { NextResponse } from "next/server";
 
 interface ImageSlidesRequest {
@@ -19,6 +19,7 @@ interface ImageSlidesRequest {
   modelId?: string;
   modelProvider?: "openai" | "ollama" | "lmstudio";
   generateSpeakerNotes?: boolean;
+  notes?: boolean;
 }
 
 const IMAGE_SLIDES_TEMPLATE = `You are an expert visual presentation designer. Create image-based slides where each slide is a full-screen image with ALL text rendered inside the image itself (no separate text overlays).
@@ -90,15 +91,21 @@ export async function POST(req: Request) {
     routeLogger.info("Image slide generation request received", { requestId });
     const session = await auth();
     if (!session) {
-      routeLogger.warn("Image slide generation request rejected: unauthorized", {
-        requestId,
-      });
+      routeLogger.warn(
+        "Image slide generation request rejected: unauthorized",
+        {
+          requestId,
+        },
+      );
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     if (!session.user.isAdmin) {
-      routeLogger.warn("Image slide generation request rejected: non-admin user", {
-        requestId,
-      });
+      routeLogger.warn(
+        "Image slide generation request rejected: non-admin user",
+        {
+          requestId,
+        },
+      );
       return NextResponse.json(
         { error: "This feature is only available for admin users" },
         { status: 403 },
@@ -113,6 +120,7 @@ export async function POST(req: Request) {
       modelId,
       modelProvider = "openai",
       generateSpeakerNotes = false,
+      notes = false,
     } = (await req.json()) as ImageSlidesRequest;
 
     if (!title || !outline || !Array.isArray(outline) || !language) {
@@ -203,14 +211,24 @@ export async function POST(req: Request) {
       OUTLINE_FORMATTED: outline.join("\n\n"),
       TOTAL_SLIDES: totalSlides,
       SPEAKER_NOTES_INSTRUCTIONS: generateSpeakerNotes
-        ? `
+        ? notes
+          ? `
 # SPEAKER NOTES REQUIREMENT
 For every slide, you MUST include a <NOTES> tag containing 3-5 sentences of speaker notes. 
-These notes should describe what is happening in the visual and explain the key message the presenter should convey.
+We need to generate a voiceover so please generate the speaker notes as if you're generating a voiceover for the slide.
 Example:
 <SECTION isImageSlide="true">
   <IMG query="..." />
-  <NOTES>This slide shows the growth trajectory... The presenter should emphasize...</NOTES>
+  <NOTES>This slide shows the growth trajectory... Key data point to mention...</NOTES>
+</SECTION>`
+          : `
+# SPEAKER NOTES REQUIREMENT
+For every slide, you MUST include a <NOTES> tag containing 3-5 sentences of speaker notes. 
+Your speaker notes will further be read by an ai bot to explain more about the slide so generate notes like you're giving an instruction to the ai bot to explain about the slide.
+Example:
+<SECTION isImageSlide="true">
+  <IMG query="..." />
+  <NOTES>Explain about the concept of... Emphasize the point on...</NOTES>
 </SECTION>`
         : "",
     });
