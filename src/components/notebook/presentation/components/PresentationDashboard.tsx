@@ -114,6 +114,7 @@ export function PresentationDashboard() {
             formData.append("files", file);
           }
           formData.append("prompt", prompt);
+          formData.append("numSlides", String(selectedNumSlides));
 
           try {
             const response = await fetch("/api/admin/ppt", {

@@ -144,7 +144,7 @@ export default function Page() {
         setFiles(reconstructedFiles);
       }
 
-      let totalSlides = 10;
+      let totalSlides = noOfSlides;
 
       // If files are present, do RAG via /api/admin/ppt
       if (reconstructedFiles.length > 0) {
@@ -155,6 +155,7 @@ export default function Page() {
             formData.append("files", file);
           }
           formData.append("prompt", finalPrompt);
+          formData.append("numSlides", String(totalSlides));
 
           const response = await fetch("/api/admin/ppt", {
             method: "POST",

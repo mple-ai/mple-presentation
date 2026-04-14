@@ -29,6 +29,9 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const files = formData.getAll("files") as File[];
   const prompt = (formData.get("prompt") as string) || "";
+  const requestedNumSlides = formData.has("numSlides") 
+    ? Number(formData.get("numSlides")) 
+    : undefined;
 
   const hasFiles = files.length > 0;
 
@@ -179,21 +182,21 @@ Instructions:
         {
           role: "system",
           content:
-            "You generate concise PowerPoint prompts and estimate slide counts.",
+            "You generate concise PowerPoint prompts and ensure the slide count matches the user's request.",
         },
         {
           role: "user",
           content: `
 Generate:
-1. A single high-quality PowerPoint prompt (max 2 lines)
-2. An appropriate number of slides
+ 1. A single high-quality PowerPoint prompt (max 2 lines)
+ 2. Exactly ${requestedNumSlides || "an appropriate number"} of slides
 
 Rules:
 - No bullet points
 - No slide breakdowns
 - No formatting instructions
 - Prompt must be concise
-- Slide count must be between 5 and 20
+- Slide count must be between 1 and 30
 
 Return STRICT JSON:
 {
@@ -204,8 +207,11 @@ Return STRICT JSON:
 Context:
 ${context}
 
-User intent:
-${prompt || "Generate a comprehensive presentation covering the core information in the provided context."}
+ User intent:
+ ${prompt || "Generate a comprehensive presentation covering the core information in the provided context."}
+
+ Requested Slide Count: ${requestedNumSlides || "Not specified (estimate based on context)"}
+ ALWAYS respect the user's requested slide count if provided.
           `,
         },
       ],
@@ -215,7 +221,7 @@ ${prompt || "Generate a comprehensive presentation covering the core information
     const promptLatency = Date.now() - promptStart;
 
     let pptPrompt = "";
-    let numSlides = 8; // fallback default
+    let numSlides = requestedNumSlides ?? 8; // use requested or fallback default
 
     try {
       const parsed = JSON.parse(
@@ -223,15 +229,16 @@ ${prompt || "Generate a comprehensive presentation covering the core information
       );
 
       pptPrompt = parsed.pptPrompt ?? "";
-      numSlides = parsed.numSlides ?? numSlides;
+      // Prioritize user's requested slides over LLM estimation
+      numSlides = requestedNumSlides ?? parsed.numSlides ?? 8;
     } catch (err) {
       logger.error("Failed to parse prompt generation JSON", err, {
         traceId,
       });
     }
 
-    // Clamp slides
-    numSlides = Math.min(20, Math.max(5, numSlides));
+    // Clamp slides to valid range [1, 30]
+    numSlides = Math.min(30, Math.max(1, numSlides));
 
     mainSpan.event("prompt_generation_response", {
       model: promptModel,
