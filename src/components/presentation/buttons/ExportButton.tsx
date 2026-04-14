@@ -1,17 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/components/ui/use-toast";
 import { usePresentationState } from "@/states/presentation-state";
 import { Download, Loader2 } from "lucide-react";
@@ -24,7 +13,6 @@ import {
 import { SaveStatus } from "./SaveStatus";
 
 export function ExportButton() {
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const exportResultRef = useRef<{ blob: Blob; fileName: string } | null>(null);
@@ -52,8 +40,12 @@ export function ExportButton() {
       setIsExporting(true);
       exportResultRef.current = null;
 
-      const { slides, currentPresentationTitle, currentPresentationId } =
-        usePresentationState.getState();
+      const {
+        slides,
+        currentPresentationTitle,
+        currentPresentationId,
+        presentationInput,
+      } = usePresentationState.getState();
 
       if (slides.length === 0) {
         throw new Error("No slides to export");
@@ -107,6 +99,7 @@ export function ExportButton() {
             type: "PRESENTATION_GENERATED",
             url: base64data,
             presentationId: currentPresentationId,
+            prompt: presentationInput,
           },
           "*",
         );
@@ -121,8 +114,6 @@ export function ExportButton() {
         throw new Error("Failed to convert presentation data.");
       };
       reader.readAsDataURL(blob);
-
-      setIsExportDialogOpen(false);
     } catch (error) {
       toast({
         title: "Export Failed",
@@ -139,89 +130,32 @@ export function ExportButton() {
   };
 
   return (
-    <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className="relative h-9 w-9 px-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3 bg-[#4e0da3] hover:bg-[#4e0da3] cursor-pointer"
-          aria-label="Export presentation"
-          disabled={isGenerationInProgress}
-        >
-          <SaveStatus className="absolute top-1 right-1 sm:static" />
-          {/* <Download className="h-4 w-4 sm:mr-1" /> */}
-          <span className="hidden sm:inline">
-            {isGenerationInProgress ? (
-              <div className="flex items-center gap-1.5">
-                <span>Generating...</span>
-              </div>
-            ) : (
-              "Continue"
-            )}
-          </span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Proceed?</DialogTitle>
-          <DialogDescription>
-            Proceed with your presentation as a PowerPoint file.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="py-4">
-          <Label className="mb-2 block">Format</Label>
-          <RadioGroup value="pptx" className="grid gap-4">
-            <div className="flex cursor-pointer items-start space-x-4 rounded-xl border border-primary bg-accent/50 p-4 ring-1 ring-primary">
-              <RadioGroupItem value="pptx" id="pptx" className="mt-3" />
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Download className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor="pptx"
-                      className="block cursor-pointer text-base font-semibold"
-                    >
-                      PowerPoint (.pptx)
-                    </Label>
-                    <p className="text-sm leading-snug text-muted-foreground">
-                      Standard PowerPoint file
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </RadioGroup>
-        </div>
-
-        <DialogFooter>
-          <Button
-            className="cursor-pointer"
-            type="button"
-            variant="secondary"
-            onClick={() => setIsExportDialogOpen(false)}
-            disabled={isExporting}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="cursor-pointer"
-            type="button"
-            onClick={handleExport}
-            disabled={isExporting || isGenerationInProgress}
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Continue"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <Button
+      size="lg"
+      className="relative h-9 w-9 px-0 sm:h-9 sm:w-auto sm:gap-1.5 sm:px-3 bg-[#4e0da3] hover:bg-[#4e0da3] cursor-pointer"
+      aria-label="Export presentation"
+      onClick={handleExport}
+      disabled={isExporting || isGenerationInProgress}
+    >
+      <SaveStatus className="absolute top-1 right-1 sm:static" />
+      {/* <Download className="h-4 w-4 sm:mr-1" /> */}
+      <span className="hidden sm:inline">
+        {isExporting ? (
+          <div className="flex items-center gap-1.5">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Exporting...</span>
+          </div>
+        ) : isGenerationInProgress ? (
+          <div className="flex items-center gap-1.5">
+            <span>Generating...</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-1.5">
+            <Download />
+            <span>Export Presentation</span>
+          </div>
+        )}
+      </span>
+    </Button>
   );
 }

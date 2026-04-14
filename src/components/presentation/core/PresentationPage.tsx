@@ -20,9 +20,9 @@ import { SlidesContainer } from "../slides/SlidesContainer";
 
 import { AllCommunityModule, ModuleRegistry } from "ag-charts-community";
 import { AllEnterpriseModule, LicenseManager } from "ag-charts-enterprise";
+import { ExportButton } from "../buttons/ExportButton";
 import { RightEditPanel } from "../edit-panel/RightEditPanel";
 import { RightPanelRenderer } from "../edit-panel/RightPanelRenderer";
-import { ExportButton } from "../buttons/ExportButton";
 
 ModuleRegistry.registerModules([AllCommunityModule, AllEnterpriseModule]);
 LicenseManager.setLicenseKey(

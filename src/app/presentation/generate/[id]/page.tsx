@@ -106,7 +106,9 @@ export default function PresentationGenerateWithIdPage() {
     if (presentationData && !isLoadingPresentation && !isGeneratingOutline) {
       setCurrentPresentation(presentationData.id, presentationData.title);
       setPresentationInput(
-        presentationData.presentation?.prompt ?? presentationData.title,
+        presentationData.presentation?.prompt ??
+          (usePresentationState.getState().presentationInput ||
+            presentationData.title),
       );
 
       const customization = getPresentationCustomization(

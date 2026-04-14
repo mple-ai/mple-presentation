@@ -53,6 +53,7 @@ async function addSlide(
   slideData: PlateSlide,
 ): Promise<void> {
   const slide = pptx.addSlide();
+  if (slideData.notes) slide.addNotes(slideData.notes);
 
   // SPECIAL HANDLING: Image Slide
   // If this is an image slide, we just want the image to fill the slide completely
@@ -242,7 +243,7 @@ function scalePosition(
       h = w / position.aspectRatio;
       if (h > originalH) {
         h = originalH;
-        w = h * position.aspectRatio;
+        w = h / position.aspectRatio;
       }
     }
   }

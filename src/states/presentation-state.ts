@@ -36,6 +36,8 @@ type PendingPresentationCreateRequest = {
   numSlides: number;
   prompt: string;
   webSearchEnabled: boolean;
+  generateSpeakerNotes: boolean;
+  notes: boolean;
 };
 
 interface PresentationState {
@@ -44,6 +46,7 @@ interface PresentationState {
   isGridView: boolean;
   isSheetOpen: boolean;
   numSlides: number;
+  files: File[];
 
   theme: Themes | string;
   customThemeData: ThemeProperties | null;
@@ -99,6 +102,8 @@ interface PresentationState {
   outline: string[];
   searchResults: Array<{ query: string; results: unknown[] }>; // Store search results for context
   webSearchEnabled: boolean; // Toggle for web search in outline generation
+  generateSpeakerNotes: boolean;
+  notes: boolean;
   slides: PlateSlide[]; // This now holds the new object structure
 
   // Root image generation tracking by slideId
@@ -142,6 +147,7 @@ interface PresentationState {
   setShouldShowExitHeader: (udpdate: boolean) => void;
   thumbnailUrl?: string;
   setThumbnailUrl: (url: string | undefined) => void;
+  setFiles: (files: File[]) => void;
   setLanguage: (lang: string) => void;
   setPageStyle: (style: string) => void;
   setShowTemplates: (show: boolean) => void;
@@ -151,6 +157,8 @@ interface PresentationState {
     results: Array<{ query: string; results: unknown[] }>,
   ) => void;
   setWebSearchEnabled: (enabled: boolean) => void;
+  setGenerateSpeakerNotes: (enabled: boolean) => void;
+  setNotes: (notes: boolean) => void;
   setImageModel: (model: ImageModelList) => void;
   setImageSource: (source: "automatic" | "ai" | "stock") => void;
   setStockImageProvider: (provider: "unsplash" | "pixabay") => void;
@@ -351,6 +359,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   thumbnailUrl: undefined,
   setThumbnailUrl: (url) => set({ thumbnailUrl: url }),
   numSlides: 10,
+  files: [],
   language: "en-US",
   pageStyle: "default",
   showTemplates: false,
@@ -358,6 +367,8 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   outline: [],
   searchResults: [],
   webSearchEnabled: false,
+  generateSpeakerNotes: false,
+  notes: false,
   theme: "mystique",
   customThemeData: null,
   imageModel: "black-forest-labs/FLUX.1-schnell",
@@ -588,6 +599,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   setCurrentPresentation: (id, title) =>
     set({ currentPresentationId: id, currentPresentationTitle: title }),
   setIsGridView: (isGrid) => set({ isGridView: isGrid }),
+  setFiles: (files) => set({ files }),
   setIsSheetOpen: (isOpen) => set({ isSheetOpen: isOpen }),
   setNumSlides: (num) => set({ numSlides: num }),
   setLanguage: (lang) => set({ language: lang }),
@@ -607,6 +619,8 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
   setOutline: (topics) => set({ outline: topics }),
   setSearchResults: (results) => set({ searchResults: results }),
   setWebSearchEnabled: (enabled) => set({ webSearchEnabled: enabled }),
+  setGenerateSpeakerNotes: (enabled) => set({ generateSpeakerNotes: enabled }),
+  setNotes: (notes) => set({ notes: notes }),
   setImageModel: (model) => set({ imageModel: model }),
   setImageSource: (source) => set({ imageSource: source }),
   setStockImageProvider: (provider) => set({ stockImageProvider: provider }),
@@ -752,7 +766,7 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
       outlineTemplateOverrides: {},
     })),
 
-  // Comprehensive reset when navigating back to /presentations page
+  // Comprehensive reset when navigating back to /presentation page
   resetPresentationState: () =>
     set(() => ({
       ...getPresentModeResetState(),
@@ -760,9 +774,12 @@ export const usePresentationState = create<PresentationState>((set, get) => ({
       currentPresentationId: null,
       currentPresentationTitle: null,
       presentationInput: "",
+      files: [],
       outline: [],
       slides: [],
       searchResults: [],
+      generateSpeakerNotes: false,
+      notes: false,
       rootImageGeneration: {},
       pageBackground: {},
       thumbnailUrl: undefined,

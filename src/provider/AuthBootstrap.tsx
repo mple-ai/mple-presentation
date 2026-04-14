@@ -42,7 +42,7 @@ export function AuthBootstrap({
 }: Readonly<{ children: React.ReactNode }>) {
   const params = useSearchParams();
   const { status } = useSession();
-  const { setLanguage } = usePresentationState();
+  const { setLanguage, setNotes } = usePresentationState();
 
   useEffect(() => {
     const language = params.get("language");
@@ -50,7 +50,12 @@ export function AuthBootstrap({
       const parsedLang = languageMap[language];
       if (parsedLang) setLanguage(parsedLang);
     }
-  }, [params, setLanguage]);
+
+    const notes = params.get("notes");
+    if (notes !== null) {
+      setNotes(notes === "true");
+    }
+  }, [params, setLanguage, setNotes]);
 
   if (status === "loading") {
     return (

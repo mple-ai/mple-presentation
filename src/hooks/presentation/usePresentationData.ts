@@ -139,7 +139,9 @@ export function usePresentationData(id: string, forcedReadOnly = false) {
       dbThemeRef.current = customizationThemeId;
       setCurrentPresentation(presentationData.id, presentationData.title);
       setPresentationInput(
-        presentationData.presentation?.prompt ?? presentationData.title,
+        presentationData.presentation?.prompt ??
+          (usePresentationState.getState().presentationInput ||
+            presentationData.title),
       );
 
       // Load all content from the database

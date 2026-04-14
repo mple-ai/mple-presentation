@@ -77,11 +77,13 @@ function hasGeneratedOutline(outline: string[]): boolean {
 }
 
 function parseOutlineItems(content: string): string[] {
-  if (!/^#\s+/m.test(content)) {
+  const firstHeadingMatch = content.match(/^# /m);
+  if (!firstHeadingMatch) {
     return [];
   }
 
-  const sections = content.split(/^# /gm).filter(Boolean);
+  const outlineContent = content.slice(firstHeadingMatch.index);
+  const sections = outlineContent.split(/^# /gm).filter(Boolean);
   return sections.length > 0
     ? sections.map((section) => `# ${section}`.trim())
     : [];
@@ -129,6 +131,8 @@ export function PresentationGenerationManager() {
     tone,
     audience,
     scenario,
+    generateSpeakerNotes,
+    notes,
   } = usePresentationState();
 
   // Persist slide updates during generation using debounced saves to limit frequency
@@ -683,6 +687,8 @@ export function PresentationGenerationManager() {
           templateContext,
           outlineTemplateHints,
           selectedTemplateCount: selectedSlideTemplates.length,
+          generateSpeakerNotes,
+          notes,
         },
       });
     }
@@ -728,6 +734,8 @@ export function PresentationGenerationManager() {
           language,
           modelId,
           modelProvider,
+          generateSpeakerNotes,
+          notes,
         },
       });
     }
