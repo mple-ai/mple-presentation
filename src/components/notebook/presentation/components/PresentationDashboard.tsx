@@ -108,59 +108,64 @@ export function PresentationDashboard() {
       const timeoutId = setTimeout(() => controller.abort(), 55000); // just under maxDuration
 
       try {
+        // Always call /api/admin/ppt for prompt enhancement and slide count
+        const formData = new FormData();
         if (currentFiles.length > 0) {
-          const formData = new FormData();
           for (const file of currentFiles) {
             formData.append("files", file);
           }
-          formData.append("prompt", prompt);
-          formData.append("numSlides", String(selectedNumSlides));
+        }
+        formData.append("prompt", prompt);
+        formData.append("numSlides", String(selectedNumSlides));
 
-          try {
-            const response = await fetch("/api/admin/ppt", {
-              method: "POST",
-              body: formData,
-              signal: controller.signal,
-            });
+        try {
+          const response = await fetch("/api/admin/ppt", {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+          });
 
-            if (response.ok) {
-              const data = await response.json();
+          if (response.ok) {
+            const data = await response.json();
 
-              if (data.numSlides) {
-                const apiNumSlides = Number(data.numSlides) || 10;
-                setNumSlides(apiNumSlides);
-                selectedNumSlides = apiNumSlides;
-              }
+            if (data.numSlides) {
+              const apiNumSlides = Number(data.numSlides) || 10;
+              setNumSlides(apiNumSlides);
+              selectedNumSlides = apiNumSlides;
+            }
 
-              if (data.pptPrompt && data.context) {
-                prompt = `${data.pptPrompt}\n\nContext:\n${data.context}`;
-              } else if (data.pptPrompt) {
-                prompt = data.pptPrompt;
-              } else if (data.context) {
-                prompt = `Context from provided documents:\n${data.context}\n\nUser Request: ${prompt}`;
-              }
-            } else {
-              console.warn(
-                "RAG search failed, proceeding with original prompt",
-              );
+            if (data.pptPrompt && data.context) {
+              prompt = `${data.pptPrompt}\n\nContext:\n${data.context}`;
+            } else if (data.pptPrompt) {
+              prompt = data.pptPrompt;
+            } else if (data.context) {
+              prompt = `Context from provided documents:\n${data.context}\n\nUser Request: ${prompt}`;
+            }
+          } else {
+            console.warn(
+              "RAG search failed, proceeding with original prompt",
+            );
+            if (currentFiles.length > 0) {
               toast.warning(
                 "Could not analyze documents. Proceeding without context.",
               );
             }
-          } catch (error) {
-            if (error instanceof Error && error.name === "AbortError") {
-              toast.warning(
-                "Document analysis timed out. Proceeding with original prompt.",
-              );
-            } else {
-              console.error("RAG Error:", error);
-              toast.warning(
-                "Could not analyze documents. Proceeding without context.",
-              );
-            }
-          } finally {
-            clearTimeout(timeoutId);
           }
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") {
+            toast.warning(
+              "Document analysis timed out. Proceeding with original prompt.",
+            );
+          } else {
+            console.error("RAG Error:", error);
+            if (currentFiles.length > 0) {
+              toast.warning(
+                "Could not analyze documents. Proceeding without context.",
+              );
+            }
+          }
+        } finally {
+          clearTimeout(timeoutId);
         }
 
         resetPresentationState();

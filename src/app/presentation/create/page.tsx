@@ -10,16 +10,18 @@ import { toast } from "sonner";
 
 type LoadingPhase = "waiting" | "analyzing" | "creating";
 
-const PHASE_LABELS: Record<LoadingPhase, string> = {
+const PHASE_LABELS: Record<LoadingPhase, string | ((hasFiles: boolean) => string)> = {
   waiting: "Preparing documents...",
-  analyzing: "Analyzing documents...",
+  analyzing: (hasFiles) =>
+    hasFiles ? "Analyzing documents..." : "Analyzing request...",
   creating: "Loading Presentation Outline",
 };
 
-function getSlideCount(value: string | null): number {
+function getSlideCount(value: string | null): number | undefined {
+  if (value === null || value === "") return undefined;
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
-    return 5;
+    return undefined;
   }
 
   return Math.max(1, Math.floor(parsed));
@@ -47,6 +49,7 @@ export default function Page() {
     setWebSearchEnabled,
     setTheme: setPresentationTheme,
     setFiles,
+    files,
     setGenerateSpeakerNotes,
     setNotes,
   } = usePresentationState();
@@ -147,51 +150,53 @@ export default function Page() {
       let totalSlides = noOfSlides;
 
       // If files are present, do RAG via /api/admin/ppt
-      if (reconstructedFiles.length > 0) {
-        setPhase("analyzing");
-        try {
-          const formData = new FormData();
+      // Always call /api/admin/ppt for prompt enhancement and slide count
+      setPhase("analyzing");
+      try {
+        const formData = new FormData();
+        if (reconstructedFiles.length > 0) {
           for (const file of reconstructedFiles) {
             formData.append("files", file);
           }
-          formData.append("prompt", finalPrompt);
-          formData.append("numSlides", String(totalSlides));
-
-          const response = await fetch("/api/admin/ppt", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-
-            if (data.numSlides) {
-              totalSlides = Number(data.numSlides);
-            }
-
-            if (data.pptPrompt && data.context) {
-              finalPrompt = `${data.pptPrompt}\n\nContext:\n${data.context}`;
-            } else if (data.pptPrompt) {
-              finalPrompt = data.pptPrompt;
-            } else if (data.context) {
-              finalPrompt = `Context from provided documents:\n${data.context}\n\nUser Request: ${finalPrompt}`;
-            }
-          } else {
-            toast.error("Failed to analyze documents.");
-            router.push("/presentation");
-            return;
-          }
-        } catch (error) {
-          console.error("RAG fetch failed:", error);
-          toast.error("An error occurred during document analysis.");
-          router.push("/presentation");
-          return;
         }
+        formData.append("prompt", finalPrompt);
+        if (totalSlides !== undefined) {
+          formData.append("numSlides", String(totalSlides));
+        }
+
+        const response = await fetch("/api/admin/ppt", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.numSlides) {
+            totalSlides = Number(data.numSlides);
+          }
+
+          if (data.pptPrompt && data.context) {
+            finalPrompt = `${data.pptPrompt}\n\nContext:\n${data.context}`;
+          } else if (data.pptPrompt) {
+            finalPrompt = data.pptPrompt;
+          } else if (data.context) {
+            finalPrompt = `Context from provided documents:\n${data.context}\n\nUser Request: ${finalPrompt}`;
+          }
+        } else {
+          // If API fails, we still proceed with original prompt but maybe log it
+          console.warn("RAG/Prompt enhancement failed, proceeding with original");
+        }
+      } catch (error) {
+        console.error("API fetch failed:", error);
+        // We don't necessarily want to block the user if only enhancement fails,
+        // but if it's a critical error (like network down), maybe we should.
+        // For now, let's proceed with original prompt to avoid a complete block.
       }
 
       // Apply final values and proceed to outline generation
       setPresentationInput(finalPrompt);
-      setNumSlides(totalSlides);
+      setNumSlides(totalSlides ?? 10);
  
       const notes = incomingNotes ?? params.get("notes");
       if (notes !== null) {
@@ -216,7 +221,11 @@ export default function Page() {
           <Spinner className="h-10 w-10 text-primary" />
         </div>
         <div className="space-y-2 text-center">
-          <h2 className="text-2xl font-bold">{PHASE_LABELS[phase]}</h2>
+          <h2 className="text-2xl font-bold">
+            {typeof PHASE_LABELS[phase] === "function"
+              ? PHASE_LABELS[phase](files.length > 0)
+              : PHASE_LABELS[phase]}
+          </h2>
           <p className="text-muted-foreground">Please wait a moment...</p>
         </div>
       </div>
