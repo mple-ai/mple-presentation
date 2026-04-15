@@ -188,14 +188,14 @@ Instructions:
           role: "user",
           content: `
 Generate:
- 1. A single high-quality PowerPoint prompt (max 2 lines)
+ 1. A single high-quality PowerPoint prompt (max 2 lines). This prompt should be an optimized, expanded version of the user's intent to get the best results from a presentation generator.
  2. Exactly ${requestedNumSlides || "an appropriate number"} of slides
 
 Rules:
 - No bullet points
 - No slide breakdowns
 - No formatting instructions
-- Prompt must be concise
+- Prompt must be concise but descriptive
 - Slide count must be between 1 and 30
 
 Return STRICT JSON:
@@ -204,13 +204,12 @@ Return STRICT JSON:
   "numSlides": number
 }
 
-Context:
-${context}
+${context ? `Context:\n${context}` : "Note: No reference documents provided. Focus entirely on expanding the User Intent into a high-quality presentation prompt."}
 
  User intent:
- ${prompt || "Generate a comprehensive presentation covering the core information in the provided context."}
+ ${prompt || "Generate a comprehensive presentation covering key topics related to the user's field."}
 
- Requested Slide Count: ${requestedNumSlides || "Not specified (estimate based on context)"}
+ Requested Slide Count: ${requestedNumSlides || "Not specified (estimate based on user intent)"}
  ALWAYS respect the user's requested slide count if provided.
           `,
         },
