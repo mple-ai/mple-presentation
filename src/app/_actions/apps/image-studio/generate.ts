@@ -10,8 +10,12 @@ import { requireOptionalIntegration } from "@/lib/env/optional-integrations";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { fal } from "@fal-ai/client";
+import { GoogleGenAI } from "@google/genai";
+import fs from "fs";
+import { OpenAI } from "openai";
+import path from "path";
 import { UTFile } from "uploadthing/server";
-import { type FalImageModelList, type ImageModelList } from "./constants";
+import { type CustomModelList, type FalImageModelList, type ImageModelList } from "./constants";
 
 async function persistGeneratedImage(
   imageUrl: string,
@@ -87,6 +91,134 @@ async function generateFalImage(
   };
 }
 
+async function generateOpenAIImage(
+  prompt: string,
+  userId: string,
+) {
+  console.log("🚀 [SERVER ACTION] Calling OpenAI (gpt-image-1.5) for prompt:", prompt);
+  const openaiConfig = requireOptionalIntegration({
+    integration: "OpenAI",
+    envVar: "OPENAI_API_KEY",
+    value: env.OPENAI_API_KEY,
+    feature: "AI image generation",
+  });
+
+  if (!openaiConfig.ok) {
+    return {
+      success: false,
+      error: openaiConfig.error,
+    };
+  }
+
+  const openai = new OpenAI({ apiKey: openaiConfig.value });
+
+  const response = await openai.images.generate({
+    model: "gpt-image-1.5",
+    prompt,
+  });
+
+  // gpt-image-1.5 returns base64 data, not a URL
+  const b64Json = response.data?.[0]?.b64_json;
+  if (!b64Json) {
+    throw new Error("OpenAI returned no image data");
+  }
+
+  const imageBuffer = Buffer.from(b64Json, "base64");
+  const filename = `openai_image_${Date.now()}.png`;
+  const utFile = new UTFile([new Uint8Array(imageBuffer)], filename);
+  const uploadResult = await utapi.uploadFiles([utFile]);
+
+  if (!uploadResult[0]?.data?.ufsUrl) {
+    throw new Error("Failed to upload OpenAI image");
+  }
+
+  const image = await db.generatedImage.create({
+    data: {
+      url: uploadResult[0].data.ufsUrl,
+      prompt,
+      userId,
+    },
+  });
+
+  return {
+    success: true,
+    image,
+  };
+}
+
+async function generateGeminiImage(prompt: string, userId: string) {
+  let googleProjectId = "";
+  const credentialsPath = path.resolve(process.cwd(), "google.json");
+
+  try {
+    const googleConfig = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
+    googleProjectId = googleConfig.project_id;
+  } catch (err: any) {
+    console.warn("Could not load google.json project_id:", err.message);
+  }
+
+  if (!googleProjectId) {
+    return {
+      success: false,
+      error: "Missing Google Project ID from google.json. Please ensure google.json is present.",
+    };
+  }
+
+  // Set environment variable required by vertexai mode
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
+
+  console.log("🍌 [SERVER ACTION] Calling Nano Banana Pro (Gemini Pro) for prompt:", prompt);
+
+  const googleGenAI = new GoogleGenAI({
+    vertexai: true,
+    project: googleProjectId,
+    location: "global",
+  });
+
+  const SYSTEM_PROMPT = `
+Generate a high quality, professional, clean illustration.
+Style: modern, realistic, sharp focus, high detail.
+Avoid text, watermarks, logos, blur, distortion.
+`;
+  const finalPrompt = `${SYSTEM_PROMPT}\nUser request: ${prompt}`;
+
+  const result = await googleGenAI.models.generateContent({
+    model: "gemini-3-pro-image-preview",
+    contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
+  });
+
+  const imagePart = result.candidates?.[0]?.content?.parts?.find((p: any) =>
+    p.inlineData?.mimeType?.startsWith("image/"),
+  );
+
+  if (!imagePart?.inlineData?.data) {
+    throw new Error("Gemini failed to generate an image");
+  }
+
+  const base64Image = imagePart.inlineData.data;
+  const imageBuffer = Buffer.from(base64Image, "base64");
+  const filename = `gemini_image_${Date.now()}.png`;
+  const utFile = new UTFile([new Uint8Array(imageBuffer)], filename);
+  const uploadResult = await utapi.uploadFiles([utFile]);
+
+  if (!uploadResult[0]?.data?.ufsUrl) {
+    throw new Error("Failed to upload Gemini image to UploadThing");
+  }
+
+  const image = await db.generatedImage.create({
+    data: {
+      url: uploadResult[0].data.ufsUrl,
+      prompt,
+      userId,
+    },
+  });
+
+  return {
+    success: true,
+    image,
+  };
+}
+
 export async function generateImageAction(
   prompt: string,
   model: ImageModelList = "black-forest-labs/FLUX.1-schnell",
@@ -101,6 +233,15 @@ export async function generateImageAction(
   }
 
   try {
+    console.log("🎯 [SERVER ACTION] generateImageAction triggered with model:", model);
+    if (model === "model1") {
+      return await generateOpenAIImage(prompt, session.user.id);
+    }
+
+    if (model === "model2") {
+      return await generateGeminiImage(prompt, session.user.id);
+    }
+
     if (model.startsWith("fal-ai/")) {
       return await generateFalImage(
         prompt,

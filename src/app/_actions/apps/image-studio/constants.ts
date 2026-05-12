@@ -18,4 +18,14 @@ export const TOGETHER_IMAGE_MODELS: {
   // { value: "black-forest-labs/FLUX.1-schnell-Free", label: "Flux 1 Schnell (Free)" },
 ];
 
-export type ImageModelList = TogetherImageModelList | FalImageModelList;
+export type CustomModelList = "model1" | "model2";
+
+export const CUSTOM_IMAGE_MODELS: {
+  value: CustomModelList;
+  label: string;
+}[] = [
+  { value: "model1", label: "OpenAI (gpt-image-1.5)" },
+  { value: "model2", label: "Nano Banana Pro (Gemini)" },
+];
+
+export type ImageModelList = TogetherImageModelList | FalImageModelList | CustomModelList;
