@@ -234,11 +234,11 @@ export async function generateImageAction(
 
   try {
     console.log("🎯 [SERVER ACTION] generateImageAction triggered with model:", model);
-    if (model === "model1") {
+    if (model === "gpt-image-1.5") {
       return await generateOpenAIImage(prompt, session.user.id);
     }
 
-    if (model === "model2") {
+    if (model === "gemini-3-pro-image-preview") {
       return await generateGeminiImage(prompt, session.user.id);
     }
 
