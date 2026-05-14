@@ -88,7 +88,7 @@ jobs:
               FAL_API_KEY=${{ secrets.FAL_API_KEY }},\
               UPLOADTHING_TOKEN=${{ secrets.UPLOADTHING_TOKEN }},\
               UNSPLASH_ACCESS_KEY=${{ secrets.UNSPLASH_ACCESS_KEY }},\
-              GOOGLE_JSON=${{ secrets.GOOGLE_JSON_V2 }},\ 
+              GOOGLE_JSON=${{ secrets.GOOGLE_JSON_V2 }},\
               TAVILY_API_KEY=${{ secrets.TAVILY_API_KEY }},\
               COGNITO_REGION=${{ secrets.COGNITO_REGION }},\
               COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID_TEST }},\
