@@ -15,7 +15,7 @@ import fs from "fs";
 import { OpenAI } from "openai";
 import path from "path";
 import { UTFile } from "uploadthing/server";
-import { type CustomModelList, type FalImageModelList, type ImageModelList } from "./constants";
+import { type FalImageModelList, type ImageModelList } from "./constants";
 
 async function persistGeneratedImage(
   imageUrl: string,
@@ -91,11 +91,11 @@ async function generateFalImage(
   };
 }
 
-async function generateOpenAIImage(
-  prompt: string,
-  userId: string,
-) {
-  console.log("🚀 [SERVER ACTION] Calling OpenAI (gpt-image-1.5) for prompt:", prompt);
+async function generateOpenAIImage(prompt: string, userId: string) {
+  console.log(
+    "🚀 [SERVER ACTION] Calling OpenAI (gpt-image-1.5) for prompt:",
+    prompt,
+  );
   const openaiConfig = requireOptionalIntegration({
     integration: "OpenAI",
     envVar: "OPENAI_API_KEY",
@@ -148,26 +148,45 @@ async function generateOpenAIImage(
 
 async function generateGeminiImage(prompt: string, userId: string) {
   let googleProjectId = "";
-  const credentialsPath = path.resolve(process.cwd(), "google.json");
+  let googleConfig;
+  let credentialsPath = path.resolve(process.cwd(), "google.json");
 
-  try {
-    const googleConfig = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
+  if (process.env.GOOGLE_JSON) {
+    console.log("✅ Using googleConfig from ENV in presentation");
+    googleConfig = JSON.parse(process.env.GOOGLE_JSON);
+    if (!fs.existsSync(credentialsPath)) {
+      fs.writeFileSync(credentialsPath, process.env.GOOGLE_JSON);
+    }
+  } else {
+    try {
+      if (fs.existsSync(credentialsPath)) {
+        console.log("📄 Using google.json file in presentation");
+        googleConfig = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
+      }
+    } catch (err: any) {
+      console.warn("Could not load google.json:", err.message);
+    }
+  }
+
+  if (googleConfig) {
     googleProjectId = googleConfig.project_id;
-  } catch (err: any) {
-    console.warn("Could not load google.json project_id:", err.message);
   }
 
   if (!googleProjectId) {
     return {
       success: false,
-      error: "Missing Google Project ID from google.json. Please ensure google.json is present.",
+      error:
+        "Missing Google Project ID from google.json. Please ensure google.json is present.",
     };
   }
 
   // Set environment variable required by vertexai mode
   process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
 
-  console.log("🍌 [SERVER ACTION] Calling Nano Banana Pro (Gemini Pro) for prompt:", prompt);
+  console.log(
+    "🍌 [SERVER ACTION] Calling Nano Banana Pro (Gemini Pro) for prompt:",
+    prompt,
+  );
 
   const googleGenAI = new GoogleGenAI({
     vertexai: true,
@@ -233,7 +252,10 @@ export async function generateImageAction(
   }
 
   try {
-    console.log("🎯 [SERVER ACTION] generateImageAction triggered with model:", model);
+    console.log(
+      "🎯 [SERVER ACTION] generateImageAction triggered with model:",
+      model,
+    );
     if (model === "gpt-image-1.5") {
       return await generateOpenAIImage(prompt, session.user.id);
     }
