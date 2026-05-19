@@ -149,7 +149,7 @@ async function generateOpenAIImage(prompt: string, userId: string) {
 async function generateGeminiImage(prompt: string, userId: string) {
   let googleProjectId = "";
   let googleConfig;
-  let credentialsPath = path.resolve(process.cwd(), "google.json");
+  let credentialsPath = "/tmp/google.json";
 
   if (process.env.GOOGLE_JSON) {
     console.log("✅ Using googleConfig from ENV in presentation");
