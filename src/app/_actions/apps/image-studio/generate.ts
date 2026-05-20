@@ -147,40 +147,29 @@ async function generateOpenAIImage(prompt: string, userId: string) {
 }
 
 async function generateGeminiImage(prompt: string, userId: string) {
-  let googleProjectId = "";
+  // Exact NestJS pattern (same as audio.gatewayV2.ts):
+  // if process.env.GOOGLE_JSON → use ENV (dev/test)
+  // else → read google.json file (prod: baked into image via Dockerfile COPY)
   let googleConfig;
-  let credentialsPath = "/tmp/google.json";
-
   if (process.env.GOOGLE_JSON) {
-    console.log("✅ Using googleConfig from ENV in presentation");
+    console.log("✅ Using googleConfig from ENV");
     googleConfig = JSON.parse(process.env.GOOGLE_JSON);
-    if (!fs.existsSync(credentialsPath)) {
-      fs.writeFileSync(credentialsPath, process.env.GOOGLE_JSON);
-    }
   } else {
-    try {
-      if (fs.existsSync(credentialsPath)) {
-        console.log("📄 Using google.json file in presentation");
-        googleConfig = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
-      }
-    } catch (err: any) {
-      console.warn("Could not load google.json:", err.message);
-    }
+    console.log("📄 Using google.json file in generate.ts");
+    googleConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "google.json"), "utf8"));
   }
 
-  if (googleConfig) {
-    googleProjectId = googleConfig.project_id;
-  }
+  const googleProjectId: string = googleConfig.project_id;
 
   if (!googleProjectId) {
     return {
       success: false,
-      error:
-        "Missing Google Project ID from google.json. Please ensure google.json is present.",
+      error: "Missing project_id in google.json.",
     };
   }
 
-  // Set environment variable required by vertexai mode
+  // Same as NestJS main.ts line 32
+  const credentialsPath = path.join(process.cwd(), "google.json");
   process.env.GOOGLE_APPLICATION_CREDENTIALS = credentialsPath;
 
   console.log(

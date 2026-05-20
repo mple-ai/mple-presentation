@@ -36,6 +36,11 @@ jobs:
       - name: Configure Docker authentication
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev -q
 
+      - name: Create google.json
+        env:
+          GOOGLE_JSON_RAW: ${{ secrets.GOOGLE_JSON }}
+        run: echo "$GOOGLE_JSON_RAW" > google.json
+
       - name: Build Docker image
         run: |
           docker build \
@@ -45,7 +50,6 @@ jobs:
             --build-arg GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
             --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
             --build-arg OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-            --build-arg GOOGLE_JSON="${{ secrets.GOOGLE_JSON }}" \
             --build-arg TOGETHER_AI_API_KEY="${{ secrets.TOGETHER_AI_API_KEY }}" \
             --build-arg FAL_API_KEY="${{ secrets.FAL_API_KEY }}" \
             --build-arg UPLOADTHING_TOKEN="${{ secrets.UPLOADTHING_TOKEN }}" \
@@ -88,7 +92,6 @@ jobs:
               FAL_API_KEY=${{ secrets.FAL_API_KEY }},\
               UPLOADTHING_TOKEN=${{ secrets.UPLOADTHING_TOKEN }},\
               UNSPLASH_ACCESS_KEY=${{ secrets.UNSPLASH_ACCESS_KEY }},\
-              GOOGLE_JSON=${{ secrets.GOOGLE_JSON }},\
               TAVILY_API_KEY=${{ secrets.TAVILY_API_KEY }},\
               COGNITO_REGION=${{ secrets.COGNITO_REGION }},\
               COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID_TEST }},\

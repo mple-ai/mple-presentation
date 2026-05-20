@@ -36,6 +36,11 @@ jobs:
       - name: Configure Docker authentication
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev -q
 
+      - name: Create google.json
+        env:
+          GOOGLE_JSON_RAW: ${{ secrets.GOOGLE_JSON }}
+        run: echo "$GOOGLE_JSON_RAW" > google.json
+
       - name: Build Docker image
         run: |
           docker build \
@@ -83,7 +88,6 @@ jobs:
               GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},\
               GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},\
               OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},\
-              GOOGLE_JSON=${{ secrets.GOOGLE_JSON }},\
               TOGETHER_AI_API_KEY=${{ secrets.TOGETHER_AI_API_KEY }},\
               FAL_API_KEY=${{ secrets.FAL_API_KEY }},\
               UPLOADTHING_TOKEN=${{ secrets.UPLOADTHING_TOKEN }},\

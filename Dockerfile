@@ -36,7 +36,6 @@ ARG TAVILY_API_KEY
 ARG COGNITO_REGION
 ARG COGNITO_USER_POOL_ID
 ARG COGNITO_CLIENT_ID
-ARG GOOGLE_JSON
 
 ENV DATABASE_URL=$DATABASE_URL \
     NEXTAUTH_URL=$NEXTAUTH_URL \
@@ -52,7 +51,6 @@ ENV DATABASE_URL=$DATABASE_URL \
     COGNITO_REGION=$COGNITO_REGION \
     COGNITO_USER_POOL_ID=$COGNITO_USER_POOL_ID \
     COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID \
-    GOOGLE_JSON=$GOOGLE_JSON \
     NODE_ENV=production \
     CI=true \
     SKIP_ENV_VALIDATION=true
@@ -70,6 +68,7 @@ RUN apk add --no-cache libc6-compat openssl \
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/google.json ./google.json
 
 USER nextjs
 
