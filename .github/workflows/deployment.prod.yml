@@ -36,6 +36,11 @@ jobs:
       - name: Configure Docker authentication
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev -q
 
+      - name: Create google.json
+        env:
+          GOOGLE_JSON_RAW: ${{ secrets.GOOGLE_JSON }}
+        run: echo "$GOOGLE_JSON_RAW" > google.json
+
       - name: Build Docker image
         run: |
           docker build \
@@ -68,8 +73,6 @@ jobs:
           docker push ${{ env.IMAGE_BASE }}:latest
 
       - name: Deploy to Cloud Run
-        env:
-          GOOGLE_JSON_VALUE: ${{ secrets.GOOGLE_JSON }}
         run: |
           gcloud run deploy $SERVICE_NAME \
             --image=${{ env.IMAGE_BASE }}:${{ github.sha }} \
@@ -92,8 +95,7 @@ jobs:
               TAVILY_API_KEY=${{ secrets.TAVILY_API_KEY }},\
               COGNITO_REGION=${{ secrets.COGNITO_REGION }},\
               COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID_PROD }},\
-              COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID_PROD }}" \
-            --update-env-vars="GOOGLE_JSON=$GOOGLE_JSON_VALUE"
+              COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID_PROD }}"
 
       - name: Verify deployment
         run: |
