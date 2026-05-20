@@ -24,8 +24,11 @@ export const CUSTOM_IMAGE_MODELS: {
   value: CustomModelList;
   label: string;
 }[] = [
-  { value: "gpt-image-1.5", label: "OpenAI (gpt-image-1.5)" },
-  { value: "gemini-3-pro-image-preview", label: "Nano Banana Pro (Gemini)" },
+  { value: "gpt-image-1.5", label: "OpenAI" },
+  { value: "gemini-3-pro-image-preview", label: "Google Gemini" },
 ];
 
-export type ImageModelList = TogetherImageModelList | FalImageModelList | CustomModelList;
+export type ImageModelList =
+  | TogetherImageModelList
+  | FalImageModelList
+  | CustomModelList;
