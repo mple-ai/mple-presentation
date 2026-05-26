@@ -38,7 +38,7 @@ jobs:
 
       - name: Create google.json
         env:
-          GOOGLE_JSON_RAW: ${{ secrets.GOOGLE_JSON }}
+          GOOGLE_JSON_RAW: ${{ secrets.GOOGLE_JSON_V2 }}
         run: echo "$GOOGLE_JSON_RAW" > google.json
 
       - name: Build Docker image
