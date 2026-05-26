@@ -36,6 +36,11 @@ jobs:
       - name: Configure Docker authentication
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev -q
 
+      - name: Create google.json
+        env:
+          GOOGLE_JSON_RAW: ${{ secrets.GOOGLE_JSON }}
+        run: echo "$GOOGLE_JSON_RAW" > google.json
+
       - name: Build Docker image
         run: |
           docker build \

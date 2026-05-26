@@ -38,3 +38,4 @@ next-env.d.ts
 google.prod.json
 google.test.json
 google.dev.json
+google.json

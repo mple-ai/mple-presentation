@@ -2,6 +2,7 @@
 
 import {
   TOGETHER_IMAGE_MODELS,
+  CUSTOM_IMAGE_MODELS,
   type ImageModelList,
 } from "@/app/_actions/apps/image-studio/constants";
 import { Label } from "@/components/ui/label";
@@ -84,6 +85,11 @@ export function ImageSourceSelector({
               AI Generation
             </SelectLabel>
             {IMAGE_MODELS.map((model) => (
+              <SelectItem key={model.value} value={model.value}>
+                {model.label}
+              </SelectItem>
+            ))}
+            {CUSTOM_IMAGE_MODELS.map((model) => (
               <SelectItem key={model.value} value={model.value}>
                 {model.label}
               </SelectItem>

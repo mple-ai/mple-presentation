@@ -10,6 +10,7 @@ export const env = createEnv({
       .default("development"),
 
     OPENAI_API_KEY: z.string().optional(),
+    GOOGLE_JSON: z.string().optional(),
     TOGETHER_AI_API_KEY: z.string().optional(),
     FAL_API_KEY: z.string().optional(),
     PINECONE_API_KEY: z.string().optional(),
@@ -38,6 +39,7 @@ export const env = createEnv({
     TAVILY_API_KEY: process.env.TAVILY_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    GOOGLE_JSON: process.env.GOOGLE_JSON,
     TOGETHER_AI_API_KEY: process.env.TOGETHER_AI_API_KEY,
     FAL_API_KEY: process.env.FAL_API_KEY,
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
