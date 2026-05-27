@@ -14,7 +14,7 @@ export const TOGETHER_IMAGE_MODELS: {
   // { value: "black-forest-labs/FLUX1.1-pro", label: "Flux 1.1 Pro" },
   // { value: "black-forest-labs/FLUX.1-pro", label: "Flux 1 Pro" },
   // { value: "black-forest-labs/FLUX.1-dev", label: "Flux 1 Dev" },
-  { value: "black-forest-labs/FLUX.1-schnell", label: "Flux 1 Schnell(fast)" },
+  { value: "black-forest-labs/FLUX.1-schnell", label: "Flux 1 Schnell (Fast)" },
   // { value: "black-forest-labs/FLUX.1-schnell-Free", label: "Flux 1 Schnell (Free)" },
 ];
 
@@ -24,8 +24,8 @@ export const CUSTOM_IMAGE_MODELS: {
   value: CustomModelList;
   label: string;
 }[] = [
-  { value: "gpt-image-1.5", label: "OpenAI(Balanced)" },
-  { value: "gemini-3-pro-image-preview", label: "Banana Pro(slow)" },
+  { value: "gpt-image-1.5", label: "OpenAI (Balanced)" },
+  { value: "gemini-3-pro-image-preview", label: "Banana Pro (Slow)" },
 ];
 
 export type ImageModelList =

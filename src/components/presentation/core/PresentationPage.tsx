@@ -46,7 +46,7 @@ export default function PresentationPage({
   const isPresentingLoading = usePresentationState(
     (s) => s.isPresentingLoading,
   );
-  // const activeRightPanel = usePresentationState((s) => s.activeRightPanel);
+  const activeRightPanel = usePresentationState((s) => s.activeRightPanel);
   const wantsToRecord = usePresentationRecordingState((s) => s.wantsToRecord);
   // Load presentation data
   const { isLoading, currentThemeData } = usePresentationData(id, readOnly);
@@ -131,7 +131,7 @@ export default function PresentationPage({
 
       {isPresentingLoading && <PresentingLoadingOverlay />}
 
-      {!isPresenting && (
+      {!isPresenting && !activeRightPanel && (
         <div className="fixed right-0 bottom-0 left-0 z-50 border-t bg-background/80 p-4 backdrop-blur-xs">
           <div className="mx-auto flex w-full max-w-4xl flex-col justify-center gap-3 sm:w-fit sm:max-w-none sm:flex-row sm:gap-4">
             <div className="w-full sm:w-fit sm:flex-none">

@@ -193,6 +193,27 @@ export function SharedGenerateControls({
             </>
           )}
         </Button>
+
+        {/* Model Selection */}
+        <Select
+          value={imageModel}
+          onValueChange={(v) => setImageModel(v as ImageModelList)}
+        >
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="black-forest-labs/FLUX.1-schnell">
+              Flux 1 Schnell (Fast)
+            </SelectItem>
+            <SelectItem value="gpt-image-1.5">
+              OpenAI (Balanced)
+            </SelectItem>
+            <SelectItem value="gemini-3-pro-image-preview">
+              Banana Pro (Slow)
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Results & Loading State - Only render container when there's content */}
@@ -327,32 +348,6 @@ export function SharedGenerateControls({
             </Select>
           </div>
 
-          {/* Model */}
-          <div className="col-span-2 space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground">
-              Model
-            </Label>
-            <Select
-              value={imageModel}
-              onValueChange={(v) => setImageModel(v as ImageModelList)}
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="black-forest-labs/FLUX1.1-pro">
-                  Flux 1.1 Pro
-                </SelectItem>
-                <SelectItem value="black-forest-labs/FLUX.1-pro">
-                  Flux 1 Pro
-                </SelectItem>
-                <SelectItem value="black-forest-labs/FLUX.1-dev">Flux Dev</SelectItem>
-                <SelectItem value="black-forest-labs/FLUX.1-schnell">
-                  Flux 1 Schnell
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
       </div>
     </div>

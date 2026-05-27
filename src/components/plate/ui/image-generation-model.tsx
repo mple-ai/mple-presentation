@@ -38,6 +38,14 @@ const MODEL_OPTIONS = [
     label: "Flux 1 Pro",
     value: "black-forest-labs/FLUX.1-pro",
   },
+  {
+    label: "OpenAI (Balanced)",
+    value: "gpt-image-1.5",
+  },
+  {
+    label: "Banana Pro (Slow)",
+    value: "gemini-3-pro-image-preview",
+  },
 ];
 
 export function GenerateImageDialogContent({
