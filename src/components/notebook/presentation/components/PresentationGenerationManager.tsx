@@ -1,10 +1,11 @@
 "use client";
 
-import { generateImageAction } from "@/app/_actions/apps/image-studio/generate";
 import { getImageFromPixabay } from "@/app/_actions/apps/image-studio/pixabay";
 import { getImageFromUnsplash } from "@/app/_actions/apps/image-studio/unsplash";
 import { updatePresentation } from "@/app/_actions/notebook/presentation/presentationActions";
-import { generateSlideImageAction } from "@/app/_actions/presentation/generate-slide-image";
+import { preGenerateImagePromptsAction } from "@/app/_actions/presentation/pre-generate-image-prompts";
+import { useDebouncedSave } from "@/hooks/presentation/useDebouncedSave";
+import { isWebSearchToolName } from "@/lib/ai/tool-names";
 import {
   getMessageText,
   getToolInputArgs,
@@ -13,9 +14,7 @@ import {
   getToolState,
   isToolPart,
 } from "@/lib/ai/uiMessageParts";
-import { isWebSearchToolName } from "@/lib/ai/tool-names";
 import { createLogger } from "@/lib/observability/logger";
-import { useDebouncedSave } from "@/hooks/presentation/useDebouncedSave";
 import { usePresentationState } from "@/states/presentation-state";
 import { useChat, useCompletion } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -55,8 +54,8 @@ interface PresentationOutlineMessageMetadata {
     | "general"
     | "analysis-report"
     | "teaching-training"
-  | "promotional-materials"
-  | "public-speeches";
+    | "promotional-materials"
+    | "public-speeches";
 }
 
 const generationLogger = createLogger("client:presentation-generation");
@@ -491,9 +490,7 @@ export function PresentationGenerationManager() {
         if (currentPresentationId) {
           updatePresentation({
             id: currentPresentationId,
-            theme:
-              theme ??
-              (resolvedTheme === "dark" ? "ebony" : "mystique"),
+            theme: theme ?? (resolvedTheme === "dark" ? "ebony" : "mystique"),
           });
         }
       },
@@ -528,9 +525,7 @@ export function PresentationGenerationManager() {
         if (currentPresentationId) {
           updatePresentation({
             id: currentPresentationId,
-            theme:
-              theme ??
-              (resolvedTheme === "dark" ? "ebony" : "mystique"),
+            theme: theme ?? (resolvedTheme === "dark" ? "ebony" : "mystique"),
           });
         }
       },
@@ -558,9 +553,14 @@ export function PresentationGenerationManager() {
           slidesRafIdRef.current = requestAnimationFrame(updateSlidesWithRAF);
         }
       } catch (error) {
-        generationLogger.error("Failed to process presentation XML stream", error, {
-          presentationId: usePresentationState.getState().currentPresentationId,
-        });
+        generationLogger.error(
+          "Failed to process presentation XML stream",
+          error,
+          {
+            presentationId:
+              usePresentationState.getState().currentPresentationId,
+          },
+        );
         toast.error("Error processing presentation content");
       }
     }
@@ -608,9 +608,14 @@ export function PresentationGenerationManager() {
         setSlides(imageSlidesData);
         save();
       } catch (error) {
-        generationLogger.error("Failed to process image slides XML stream", error, {
-          presentationId: usePresentationState.getState().currentPresentationId,
-        });
+        generationLogger.error(
+          "Failed to process image slides XML stream",
+          error,
+          {
+            presentationId:
+              usePresentationState.getState().currentPresentationId,
+          },
+        );
         toast.error("Error processing image slides content");
       }
     }
@@ -661,36 +666,85 @@ export function PresentationGenerationManager() {
       streamingParserRef.current.reset();
       setIsGeneratingPresentation(true);
       setThumbnailUrl(undefined);
-      generationLogger.info("Presentation generation started", {
-        presentationId: currentPresentationId,
-        title: currentPresentationTitle ?? presentationInput ?? "",
-        outlineItems: outline.length,
-        modelProvider,
-        modelId: modelId || "gpt-4o-mini",
-        imageSource,
-        templateCount: selectedSlideTemplates.length,
-      });
-      void generatePresentation(presentationInput ?? "", {
-        body: {
+      generationLogger.info(
+        "Presentation generation and pre generation started",
+        {
+          presentationId: currentPresentationId,
           title: currentPresentationTitle ?? presentationInput ?? "",
-          prompt: presentationInput ?? "",
-          outline,
-          searchResults: stateSearchResults,
-          language,
-          tone: tone,
-          modelId,
+          outlineItems: outline.length,
           modelProvider,
-          textContent,
-          audience,
-          scenario,
+          modelId: modelId || "gpt-4o-mini",
           imageSource,
-          templateContext,
-          outlineTemplateHints,
-          selectedTemplateCount: selectedSlideTemplates.length,
-          generateSpeakerNotes,
-          notes,
+          templateCount: selectedSlideTemplates.length,
         },
-      });
+      );
+
+      // Async wrapper to execute sequential pre-generation then parallel streams
+      (async () => {
+        let preGeneratedImagePrompts: string[] | undefined ;
+
+        try {
+          const toastId = toast.loading("Ideating slide visuals...");
+          const result = await preGenerateImagePromptsAction({
+            outline,
+            title: currentPresentationTitle ?? presentationInput ?? "",
+            prompt: presentationInput ?? "",
+            imageSource,
+            modelProvider,
+            modelId: modelId || "gpt-4o-mini",
+          });
+
+          toast.dismiss(toastId);
+
+          if (result.success && result.queries?.length === outline.length) {
+            preGeneratedImagePrompts = result.queries;
+            toast.success(
+              "Image ideas generated. Initiating parallel image creation!",
+            );
+
+            // Trigger parallel image generation immediately using stable slide-index IDs
+            for (let i = 0; i < preGeneratedImagePrompts.length; i++) {
+              const query = preGeneratedImagePrompts[i];
+              if (query && query.trim().length > 0) {
+                startRootImageGeneration(`slide-${i}`, query);
+              }
+            }
+          } else {
+            console.warn(
+              "Pre-generation returned no prompts or mismatched array length. Falling back to sequential.",
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Failed to pre-generate prompts, falling back to original flow:",
+            error,
+          );
+        }
+
+        // Trigger the slide completion stream, passing the preGeneratedImagePrompts if they were successfully built
+        void generatePresentation(presentationInput ?? "", {
+          body: {
+            title: currentPresentationTitle ?? presentationInput ?? "",
+            prompt: presentationInput ?? "",
+            outline,
+            searchResults: stateSearchResults,
+            language,
+            tone: tone,
+            modelId,
+            modelProvider,
+            textContent,
+            audience,
+            scenario,
+            imageSource,
+            templateContext,
+            outlineTemplateHints,
+            selectedTemplateCount: selectedSlideTemplates.length,
+            generateSpeakerNotes,
+            notes,
+            preGeneratedImagePrompts,
+          },
+        });
+      })();
     }
   }, [shouldStartPresentationGeneration]);
 
@@ -758,16 +812,18 @@ export function PresentationGenerationManager() {
           }));
 
         const slide = slides.find((s) => s.id === slideId);
-        if (slide?.rootImage?.query) {
+        const query = gen.query || slide?.rootImage?.query;
+        if (query) {
+          const isImageSlide = Boolean(slide?.isImageSlide);
           const usesStockSearch =
-            usesStockSearchForPresentation(imageSource) && !slide.isImageSlide;
+            usesStockSearchForPresentation(imageSource) && !isImageSlide;
           generationLogger.info("Root image generation started", {
             presentationId: currentPresentationId,
             slideId,
-            isImageSlide: Boolean(slide.isImageSlide),
+            isImageSlide,
             imageSource,
             imageModel,
-            query: slide.rootImage.query,
+            query,
           });
           void (async () => {
             try {
@@ -775,13 +831,14 @@ export function PresentationGenerationManager() {
 
               if (usesStockSearch) {
                 const { stockImageProvider } = usePresentationState.getState();
+                const layoutType = slide?.rootImage?.layoutType;
                 if (
                   imageSource === "stock" &&
                   stockImageProvider === "pixabay"
                 ) {
                   const pixabayResult = await getImageFromPixabay(
-                    slide.rootImage!.query,
-                    slide.rootImage!.layoutType,
+                    query,
+                    layoutType,
                   );
                   if (pixabayResult.success && pixabayResult.imageUrl) {
                     result = {
@@ -791,8 +848,8 @@ export function PresentationGenerationManager() {
                   }
                 } else {
                   const unsplashResult = await getImageFromUnsplash(
-                    slide.rootImage!.query,
-                    slide.rootImage!.layoutType,
+                    query,
+                    layoutType,
                   );
                   if (unsplashResult.success && unsplashResult.imageUrl) {
                     result = {
@@ -802,16 +859,35 @@ export function PresentationGenerationManager() {
                   }
                 }
               } else {
-                if (slide?.isImageSlide) {
-                  result = await generateSlideImageAction(
-                    slide.rootImage!.query,
-                    imageModel,
+                try {
+                  const response = await fetch(
+                    "/api/presentation/generate-image",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        prompt: query,
+                        model: imageModel,
+                        isImageSlide,
+                      }),
+                    },
                   );
-                } else {
-                  result = await generateImageAction(
-                    slide.rootImage!.query,
-                    imageModel,
-                  );
+                  if (!response.ok) {
+                    throw new Error(
+                      `Failed to generate image via API: ${response.statusText}`,
+                    );
+                  }
+                  result = await response.json();
+                } catch (error) {
+                  result = {
+                    success: false,
+                    error:
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to generate image",
+                  };
                 }
               }
 
@@ -828,14 +904,14 @@ export function PresentationGenerationManager() {
                     s.id === slideId
                       ? {
                           ...s,
-                        rootImage: {
-                          ...s.rootImage!,
-                          url: result.image.url,
-                          imageSource: usesStockSearch
-                            ? "search"
-                            : "generate",
-                        },
-                      }
+                          rootImage: {
+                            ...s.rootImage!,
+                            url: result.image.url,
+                            imageSource: usesStockSearch
+                              ? "search"
+                              : "generate",
+                          },
+                        }
                       : s,
                   ),
                 );
@@ -859,11 +935,15 @@ export function PresentationGenerationManager() {
             } catch (err) {
               const message =
                 err instanceof Error ? err.message : "Image generation failed";
-              generationLogger.error("Root image generation threw an error", err, {
-                presentationId: currentPresentationId,
-                slideId,
-                mode: usesStockSearch ? "stock-search" : "ai-generate",
-              });
+              generationLogger.error(
+                "Root image generation threw an error",
+                err,
+                {
+                  presentationId: currentPresentationId,
+                  slideId,
+                  mode: usesStockSearch ? "stock-search" : "ai-generate",
+                },
+              );
               failRootImageGeneration(slideId, message);
             }
           })();

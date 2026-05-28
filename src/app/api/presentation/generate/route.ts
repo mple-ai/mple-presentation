@@ -29,6 +29,7 @@ interface SlidesRequest {
   selectedTemplateCount?: number; // Number of templates selected by user
   generateSpeakerNotes?: boolean;
   notes?: boolean;
+  preGeneratedImagePrompts?: string[];
 }
 
 const DEFAULT_LAYOUTS = `
@@ -302,20 +303,20 @@ function formatSearchResults(
   return searchData || "No research data available.";
 }
 
-function getImageQueryStyle(imageSource?: string): string {
+function getImageQueryStyle(imageSource?: string, preGeneratedImagePrompts?: string[]): string {
   const isStockImage =
     imageSource === "stock" || imageSource === "automatic" || !imageSource;
 
+  let baseStyle = "";
   if (isStockImage) {
-    return `**STOCK IMAGE SEARCH**: Use SHORT keyword queries (1-4 words).
+    baseStyle = `**STOCK IMAGE SEARCH**: Use SHORT keyword queries (1-4 words).
 Important: Every \`<IMG query="...">\` value for stock image search MUST be written in English for Unsplash compatibility, even if the presentation language is not English. Keep the slide text/content in the requested presentation language; only the image search query must stay in English.
 \`\`\`xml
 <IMG query="smart city skyline" />
 <IMG query="team collaboration" />
 \`\`\``;
-  }
-
-  return `**AI IMAGE GENERATION**: Use DETAILED descriptive prompts (60-120 words).
+  } else {
+    baseStyle = `**AI IMAGE GENERATION**: Use DETAILED descriptive prompts (60-120 words).
 
 Create detailed, artistic prompts that:
 - Describe the visual scene, composition, and mood
@@ -330,6 +331,21 @@ Create detailed, artistic prompts that:
 <IMG query="cinematic wide-angle view of a futuristic smart city powered by renewable energy, gleaming solar arrays and vertical gardens, morning haze, warm sunlight cutting through glass towers, clean aerial composition with leading lines, crisp details, high contrast, optimistic mood" />
 <IMG query="photorealistic scene of a diverse product team collaborating in a modern glass office, warm ambient lighting, soft shadows, laptops and whiteboards with sketched diagrams, shallow depth of field, candid expressions, balanced composition, professional yet inviting atmosphere" />
 \`\`\``;
+  }
+
+  if (preGeneratedImagePrompts && preGeneratedImagePrompts.length > 0) {
+    const promptList = preGeneratedImagePrompts
+      .map((prompt, index) => `- Slide ${index + 1}: \`${prompt}\``)
+      .join("\n");
+
+    baseStyle += `\n\n### 🔒 PRE-GENERATED IMAGE PROMPTS (MANDATORY)
+We have pre-generated image prompts for this presentation. For each slide, you **MUST** use the exact query listed below in your \`<IMG query="..." />\` tag:
+${promptList}
+
+**CRITICAL:** Do NOT modify these prompts, do NOT write custom queries. Use the exact query string provided for each corresponding slide index.`;
+  }
+
+  return baseStyle;
 }
 
 function buildAvailableLayouts(
@@ -418,11 +434,15 @@ function buildCriticalRules(
   templateContext: string | undefined,
   selectedTemplateCount: number,
   totalSlides: number,
+  hasPreGeneratedPrompts: boolean = false,
 ): string {
+  const idRule = hasPreGeneratedPrompts
+    ? `\n2. **STABLE SLIDE IDENTIFIERS (MANDATORY)**: For every slide (from index 0 to ${totalSlides - 1}), you **MUST** format the opening tag exactly as \`<SECTION id="slide-i" layout="...">\`, replacing "i" with the slide index number (e.g. Slide 1 must be \`<SECTION id="slide-0" ...>\`, Slide 2 must be \`<SECTION id="slide-1" ...>\`, and so on). Also, you **MUST** use the exact pre-generated image prompts in the \`<IMG query="..." />\` tag for the corresponding slide index.`
+    : `\n2. Use DIFFERENT layouts for consecutive slides - never repeat`;
+
   // No templates - default rules
   if (!templateContext) {
-    return `1. Generate **EXACTLY {TOTAL_SLIDES} slides** - no more, no less
-2. Use DIFFERENT layouts for consecutive slides - never repeat
+    return `1. Generate **EXACTLY {TOTAL_SLIDES} slides** - no more, no less${idRule}
 3. Expand outline content - do NOT copy verbatim
 4. Include detailed image queries on most slides
 5. Vary SECTION layout attribute (left/right/vertical) throughout
@@ -431,22 +451,22 @@ function buildCriticalRules(
 
   // Partial template selection
   if (selectedTemplateCount < totalSlides) {
-    return `1. Generate **EXACTLY {TOTAL_SLIDES} slides** - no more, no less
-2. **MUST USE ALL SELECTED TEMPLATES**: You have ${selectedTemplateCount} selected template(s) - each MUST appear at least once
-3. **REMAINING SLIDES**: Fill the other ${totalSlides - selectedTemplateCount} slides using layouts from ADDITIONAL LAYOUTS
-4. Expand outline content - do NOT copy verbatim
-5. You may add \`<IMG query="..." />\` tags for images
-6. Vary SECTION layout attribute (left/right/vertical) throughout
-7. For per-slide assignments: use the EXACT template specified`;
+    return `1. Generate **EXACTLY {TOTAL_SLIDES} slides** - no more, no less${idRule}
+3. **MUST USE ALL SELECTED TEMPLATES**: You have ${selectedTemplateCount} selected template(s) - each MUST appear at least once
+4. **REMAINING SLIDES**: Fill the other ${totalSlides - selectedTemplateCount} slides using layouts from ADDITIONAL LAYOUTS
+5. Expand outline content - do NOT copy verbatim
+6. You may add \`<IMG query="..." />\` tags for images
+7. Vary SECTION layout attribute (left/right/vertical) throughout
+8. For per-slide assignments: use the EXACT template specified`;
   }
 
   // Full template constraint
-  return `1. Generate **EXACTLY {TOTAL_SLIDES} slides** - no more, no less
-2. **TEMPLATE CONSTRAINT**: Use ONLY layouts from AVAILABLE LAYOUTS. Any other tag = parsing failure
-3. Expand outline content - do NOT copy verbatim
-4. You may add \`<IMG query="..." />\` tags - this is the ONLY modification allowed
-5. Vary SECTION layout attribute (left/right/vertical) throughout
-6. For per-slide assignments: use the EXACT template specified with NO structural changes`;
+  return `1. Generate **EXACTLY {TOTAL_SLIDES} slides** - no more, no less${idRule}
+3. **TEMPLATE CONSTRAINT**: Use ONLY layouts from AVAILABLE LAYOUTS. Any other tag = parsing failure
+4. Expand outline content - do NOT copy verbatim
+5. You may add \`<IMG query="..." />\` tags - this is the ONLY modification allowed
+6. Vary SECTION layout attribute (left/right/vertical) throughout
+7. For per-slide assignments: use the EXACT template specified with NO structural changes`;
 }
 
 export async function POST(req: Request) {
@@ -484,6 +504,7 @@ export async function POST(req: Request) {
       selectedTemplateCount,
       generateSpeakerNotes = false,
       notes = false,
+      preGeneratedImagePrompts,
     } = (await req.json()) as SlidesRequest;
 
     if (!title || !outline || !Array.isArray(outline) || !language) {
@@ -591,7 +612,7 @@ export async function POST(req: Request) {
       TEXT_CONTENT: textContent || "concise",
       AUDIENCE: audience || "auto",
       SCENARIO: scenario || "auto",
-      IMAGE_QUERY_STYLE: getImageQueryStyle(imageSource),
+      IMAGE_QUERY_STYLE: getImageQueryStyle(imageSource, preGeneratedImagePrompts),
       AVAILABLE_LAYOUTS: buildAvailableLayouts(
         templateContext,
         templateCount,
@@ -605,6 +626,7 @@ export async function POST(req: Request) {
         templateContext,
         templateCount,
         totalSlides,
+        preGeneratedImagePrompts && preGeneratedImagePrompts.length > 0,
       ),
       SPEAKER_NOTES_INSTRUCTIONS: generateSpeakerNotes
         ? notes
